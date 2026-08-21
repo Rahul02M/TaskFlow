@@ -12,5 +12,7 @@ namespace TaskFlow.Domain.Entities
         public DateTime? UpdatedAt { get; set; }
         public bool IsDeleted { get; set; }
         public DateTime? DeletedAt { get; set; }
+        public ICollection<TeamMember> TeamMembers { get; set; } = new List<TeamMember>();
+        public ICollection<Project> Projects { get; set; } = new List<Project>();
     }
 }

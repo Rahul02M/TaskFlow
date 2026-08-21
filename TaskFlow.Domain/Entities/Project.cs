@@ -27,7 +27,7 @@ namespace TaskFlow.Domain.Entities
 
         public DateTime? DeletedAt { get; set; }
 
-
+        public ICollection<TaskItem> TaskItems { get; set; } = new List<TaskItem>();
 
 
     }
