@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using TaskFlow.Application.DTOs.Projects;
 using TaskFlow.Domain.Entities;
 
 namespace TaskFlow.Application.Interfaces
@@ -9,7 +10,7 @@ namespace TaskFlow.Application.Interfaces
     {
         Task<List<Project>> GetAllAsync();
         Task<Project?> GetByIdAsync(int id);
-        Task<Project> CreateAsync(Project project);
+        Task<Project> CreateAsync(CreateProjectRequest request);
         Task<bool> UpdateAsync(Project project);
         Task<bool> DeleteAsync( int id);
 

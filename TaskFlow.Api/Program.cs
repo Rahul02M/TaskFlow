@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.Interfaces;
+using TaskFlow.Application.Services;
 using TaskFlow.Infrastructure.Data;
 using TaskFlow.Infrastructure.Repositories;
 
@@ -14,17 +15,21 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-
+builder.Services.AddControllers();
 
 builder.Services.AddDbContext<TaskFlowDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("TaskFlowConnection")));
 
 builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
+builder.Services.AddScoped<IProjectService, ProjectService>();
 
+builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
+builder.Services.AddScoped<ICompanyService, CompanyService>();
 
 
 var app = builder.Build();
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -33,6 +38,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.MapControllers();
 
 var summaries = new[]
 {
