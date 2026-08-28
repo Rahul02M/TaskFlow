@@ -11,6 +11,7 @@ namespace TaskFlow.Domain.Entities
         public int TeamId { get; set; }
         public Team? Team { get; set; }
         public TeamRole TeamRole { get; set; }
-        
+        public bool IsDeleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
     }
 }
