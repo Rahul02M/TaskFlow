@@ -17,6 +17,8 @@ namespace TaskFlow.Infrastructure.Repositories
         public async Task<List<TeamMember>> GetAllAsync()
         {
             return await _context.TeamMembers
+                .Include(x => x.User)
+                .Include(x => x.Team)
                 .Where(x => !x.IsDeleted)
                 .ToListAsync();
         }
@@ -24,6 +26,8 @@ namespace TaskFlow.Infrastructure.Repositories
         public async Task<TeamMember?> GetByIdAsync(int id)
         {
             return await _context.TeamMembers
+                .Include(x => x.User)
+                .Include(x => x.Team)
                 .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
         }
 
@@ -45,6 +49,14 @@ namespace TaskFlow.Infrastructure.Repositories
             teamMember.DeletedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
+        }
+        public async Task<bool> ExistsAsync(int userId, int teamId)
+        {
+            return await _context.TeamMembers
+                .AnyAsync(x =>
+                    x.UserId == userId &&
+                    x.TeamId == teamId &&
+                    !x.IsDeleted);
         }
     }
 }

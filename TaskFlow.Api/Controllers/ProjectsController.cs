@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using TaskFlow.Application.DTOs.Projects;
 using TaskFlow.Application.Interfaces;
+using TaskFlow.Domain.Entities;
 
 namespace TaskFlow.Api.Controllers
 {
@@ -24,13 +25,47 @@ namespace TaskFlow.Api.Controllers
             return Ok(projects);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Create (CreateProjectRequest request)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
         {
-             var project = await  _projectService.CreateAsync(request);
+            var project = await _projectService.GetByIdAsync(id);
+
+            if (project == null)
+                return NotFound();
+
+            return Ok(project);
+        }
+        [HttpPost]
+        public async Task<IActionResult> Create(CreateProjectRequest request)
+        {
+            var project = await _projectService.CreateAsync(request);
 
             return Ok(project);
         }
 
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, Project project)
+        {
+            if (id != project.Id)
+                return BadRequest();
+
+            var result = await _projectService.UpdateAsync(project);
+
+            if (!result)
+                return NotFound();
+
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var result = await _projectService.DeleteAsync(id);
+
+            if (!result)
+                return NotFound();
+
+            return NoContent();
+        }
     }
 }

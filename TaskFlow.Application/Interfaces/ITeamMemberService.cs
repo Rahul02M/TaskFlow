@@ -1,14 +1,15 @@
-﻿using TaskFlow.Domain.Entities;
+﻿using TaskFlow.Application.DTOs.TeamMembers;
+using TaskFlow.Domain.Entities;
 
 namespace TaskFlow.Application.Interfaces
 {
     public interface ITeamMemberService
     {
-        Task<List<TeamMember>> GetAllAsync();
+        Task<List<TeamMemberDto>> GetAllAsync();
 
-        Task<TeamMember?> GetByIdAsync(int id);
+        Task<TeamMemberDto?> GetByIdAsync(int id);
 
-        Task<TeamMember> CreateAsync(TeamMember teamMember);
+        Task<TeamMemberDto> CreateAsync(TeamMember teamMember);
 
         Task<bool> UpdateAsync(TeamMember teamMember);
 
