@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TaskFlow.Api.Middleware;
 using TaskFlow.Application.Interfaces;
 using TaskFlow.Application.Services;
 using TaskFlow.Infrastructure.Data;
@@ -24,7 +25,8 @@ builder.Services.AddDbContext<TaskFlowDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("TaskFlowConnection")));
 
-
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
@@ -54,6 +56,9 @@ var app = builder.Build();
 //{
 //    app.MapOpenApi();
 //}
+
+app.UseExceptionHandler();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

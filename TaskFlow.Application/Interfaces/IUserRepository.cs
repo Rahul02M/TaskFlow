@@ -13,5 +13,6 @@ namespace TaskFlow.Application.Interfaces
         Task UpdateAsync(User user);
 
         Task DeleteAsync(User user);
+        Task<bool> ExistsAsync(int id);
     }
 }

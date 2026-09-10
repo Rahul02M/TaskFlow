@@ -46,5 +46,11 @@ namespace TaskFlow.Infrastructure.Repositories
 
             await _context.SaveChangesAsync();
         }
+
+        public async Task<bool> ExistsAsync(int id)
+        {
+            return await _context.Projects
+                .AnyAsync(x => x.Id == id && !x.IsDeleted);
+        }
     }
 }

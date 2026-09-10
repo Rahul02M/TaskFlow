@@ -17,13 +17,17 @@ namespace TaskFlow.Infrastructure.Repositories
         public async Task<List<TaskItem>> GetAllAsync()
         {
             return await _context.TaskItems
-                .Where(x => !x.IsDeleted)
-                .ToListAsync();
+              .Include(x => x.Project)
+              .Include(x => x.AssignedUser)
+              .Where(x => !x.IsDeleted)
+              .ToListAsync();
         }
 
         public async Task<TaskItem?> GetByIdAsync(int id)
         {
             return await _context.TaskItems
+                .Include(x => x.Project)
+                .Include(x => x.AssignedUser)
                 .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
         }
 

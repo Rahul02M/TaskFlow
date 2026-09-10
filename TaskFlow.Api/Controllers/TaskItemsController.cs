@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using TaskFlow.Application.DTOs.TaskItems;
 using TaskFlow.Application.Interfaces;
-using TaskFlow.Domain.Entities;
+
 
 namespace TaskFlow.Api.Controllers
 {
@@ -34,20 +35,20 @@ namespace TaskFlow.Api.Controllers
             return Ok(task);
         }
         [HttpPost]
-        public async Task<IActionResult> Create(TaskItem taskItem)
+        public async Task<IActionResult> Create(CreateTaskItemRequest request)
         {
-            var createdTask = await _taskItemService.CreateAsync(taskItem);
+            var createdTask = await _taskItemService.CreateAsync(request);
 
-            return Ok(createdTask);
+            return CreatedAtAction(
+                nameof(GetById),
+                new { id = createdTask.Id },
+                createdTask);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, TaskItem taskItem)
+        public async Task<IActionResult> Update(int id, UpdateTaskItemRequest request)
         {
-            if (id != taskItem.Id)
-                return BadRequest();
-
-            var result = await _taskItemService.UpdateAsync(taskItem);
+            var result = await _taskItemService.UpdateAsync(id, request);
 
             if (!result)
                 return NotFound();

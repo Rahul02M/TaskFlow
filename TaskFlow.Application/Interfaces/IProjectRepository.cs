@@ -12,6 +12,6 @@ namespace TaskFlow.Application.Interfaces
         Task AddAsync(Project project);
         Task UpdateAsync(Project project);
         Task DeleteAsync(Project project);
-
+        Task<bool> ExistsAsync(int id);
     }
 }
