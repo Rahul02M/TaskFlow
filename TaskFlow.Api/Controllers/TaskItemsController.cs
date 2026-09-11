@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TaskFlow.Application.DTOs.TaskItems;
 using TaskFlow.Application.Interfaces;
 
@@ -7,6 +8,8 @@ namespace TaskFlow.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+
+    [Authorize]
     public class TaskItemsController : ControllerBase
     {
         private readonly ITaskItemService _taskItemService;
@@ -34,6 +37,7 @@ namespace TaskFlow.Api.Controllers
 
             return Ok(task);
         }
+        
         [HttpPost]
         public async Task<IActionResult> Create(CreateTaskItemRequest request)
         {
@@ -56,6 +60,7 @@ namespace TaskFlow.Api.Controllers
             return NoContent();
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

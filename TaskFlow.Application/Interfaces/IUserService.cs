@@ -1,4 +1,5 @@
-﻿using TaskFlow.Domain.Entities;
+﻿using TaskFlow.Application.DTOs.Users;
+using TaskFlow.Domain.Entities;
 
 namespace TaskFlow.Application.Interfaces
 {
@@ -8,7 +9,8 @@ namespace TaskFlow.Application.Interfaces
 
         Task<User?> GetByIdAsync(int id);
 
-        Task<User> CreateAsync(User user);
+        //Task<User> CreateAsync(User user);
+        Task<User> CreateAsync(CreateUserRequest request);
 
         Task<bool> UpdateAsync(User user);
 

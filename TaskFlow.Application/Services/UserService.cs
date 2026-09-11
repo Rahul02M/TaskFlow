@@ -1,15 +1,20 @@
-﻿using TaskFlow.Application.Interfaces;
+﻿using Microsoft.AspNetCore.Identity;
+using TaskFlow.Application.DTOs.Users;
+using TaskFlow.Application.Interfaces;
 using TaskFlow.Domain.Entities;
+using TaskFlow.Domain.Enums;
 
 namespace TaskFlow.Application.Services
 {
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly PasswordHasher<User> _passwordHasher;
 
         public UserService(IUserRepository userRepository)
         {
             _userRepository = userRepository;
+            _passwordHasher = new PasswordHasher<User>();
         }
 
         public async Task<List<User>> GetAllAsync()
@@ -22,11 +27,22 @@ namespace TaskFlow.Application.Services
             return await _userRepository.GetByIdAsync(id);
         }
 
-        public async Task<User> CreateAsync(User user)
+        public async Task<User> CreateAsync(CreateUserRequest request)
         {
-            user.CreatedAt = DateTime.Now;
-            user.IsActive = true;
-            user.IsDeleted = false;
+            var user = new User
+            {
+                Name = request.Name,
+                Email = request.Email,
+                CompanyId = request.CompanyId,
+                SystemRole = (SystemRole)request.SystemRole,
+                CreatedAt = DateTime.Now,
+                IsActive = true,
+                IsDeleted = false
+            };
+
+            user.PasswordHash = _passwordHasher.HashPassword(
+                user,
+                request.Password);
 
             await _userRepository.AddAsync(user);
 

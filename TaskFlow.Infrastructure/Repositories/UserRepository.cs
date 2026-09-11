@@ -52,5 +52,11 @@ namespace TaskFlow.Infrastructure.Repositories
             return await _context.Users
                 .AnyAsync(x => x.Id == id && !x.IsDeleted && x.IsActive);
         }
+
+        public async Task<User?> GetByEmailAsync(string email)
+        {
+            return await _context.Users
+                .FirstOrDefaultAsync(x =>x.Email == email && !x.IsDeleted && x.IsActive);
+        }
     }
 }

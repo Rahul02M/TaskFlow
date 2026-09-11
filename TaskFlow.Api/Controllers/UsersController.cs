@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TaskFlow.Application.Interfaces;
-using TaskFlow.Domain.Entities;
+using TaskFlow.Application.DTOs.Users;
 
 namespace TaskFlow.Api.Controllers
 {
@@ -35,9 +35,9 @@ namespace TaskFlow.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(User user)
+        public async Task<IActionResult> Create(CreateUserRequest request)
         {
-            var createdUser = await _userService.CreateAsync(user);
+            var createdUser = await _userService.CreateAsync(request);
 
             return Ok(createdUser);
         }
