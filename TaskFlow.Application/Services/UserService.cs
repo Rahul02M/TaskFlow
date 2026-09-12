@@ -17,16 +17,39 @@ namespace TaskFlow.Application.Services
             _passwordHasher = new PasswordHasher<User>();
         }
 
-        public async Task<List<User>> GetAllAsync()
+        public async Task<List<UserDto>> GetAllAsync()
         {
-            return await _userRepository.GetAllAsync();
-        }
+            var users = await _userRepository.GetAllAsync();
 
-        public async Task<User?> GetByIdAsync(int id)
+            return users.Select(user => new UserDto
+            {
+                Id = user.Id,
+                CompanyId = user.CompanyId,
+                Name = user.Name,
+                Email = user.Email,
+                SystemRole = (int)user.SystemRole,
+                CreatedAt = user.CreatedAt,
+                IsActive = user.IsActive
+            }).ToList();
+        }
+        public async Task<UserDto?> GetByIdAsync(int id)
         {
-            return await _userRepository.GetByIdAsync(id);
-        }
+            var user = await _userRepository.GetByIdAsync(id);
 
+            if (user == null)
+                return null;
+
+            return new UserDto
+            {
+                Id = user.Id,
+                CompanyId = user.CompanyId,
+                Name = user.Name,
+                Email = user.Email,
+                SystemRole = (int)user.SystemRole,
+                CreatedAt = user.CreatedAt,
+                IsActive = user.IsActive
+            };
+        }
         public async Task<User> CreateAsync(CreateUserRequest request)
         {
             var user = new User
@@ -49,25 +72,24 @@ namespace TaskFlow.Application.Services
             return user;
         }
 
-        public async Task<bool> UpdateAsync(User user)
+        public async Task<bool> UpdateAsync( int id, UpdateUserRequest request)
         {
-            var existingUser = await _userRepository.GetByIdAsync(user.Id);
+            var user = await _userRepository.GetByIdAsync(id);
 
-            if (existingUser == null)
+            if (user == null)
                 return false;
 
-            existingUser.Name = user.Name;
-            existingUser.Email = user.Email;
-            existingUser.CompanyId = user.CompanyId;
-            existingUser.SystemRole = user.SystemRole;
-            existingUser.IsActive = user.IsActive;
-            existingUser.UpdatedAt = DateTime.Now;
+            user.Name = request.Name;
+            user.Email = request.Email;
+            user.CompanyId = request.CompanyId;
+            user.SystemRole = (SystemRole)request.SystemRole;
+            user.IsActive = request.IsActive;
+            user.UpdatedAt = DateTime.UtcNow;
 
-            await _userRepository.UpdateAsync(existingUser);
+            await _userRepository.UpdateAsync(user);
 
             return true;
         }
-
         public async Task<bool> DeleteAsync(int id)
         {
             var user = await _userRepository.GetByIdAsync(id);
@@ -75,7 +97,11 @@ namespace TaskFlow.Application.Services
             if (user == null)
                 return false;
 
-            await _userRepository.DeleteAsync(user);
+            user.IsDeleted = true;
+            user.IsActive = false;
+            user.DeletedAt = DateTime.Now;
+
+            await _userRepository.UpdateAsync(user);
 
             return true;
         }

@@ -1,11 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using TaskFlow.Application.Interfaces;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TaskFlow.Application.DTOs.Users;
+using TaskFlow.Application.Interfaces;
 
 namespace TaskFlow.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "Admin")]
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -40,6 +42,17 @@ namespace TaskFlow.Api.Controllers
             var createdUser = await _userService.CreateAsync(request);
 
             return Ok(createdUser);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, UpdateUserRequest request)
+        {
+            var result = await _userService.UpdateAsync(id, request);
+
+            if (!result)
+                return NotFound();
+
+            return NoContent();
         }
     }
 }
