@@ -10,8 +10,8 @@ namespace TaskFlow.Application.Interfaces
         Task<UserDto?> GetByIdAsync(int id);
 
         //Task<User> CreateAsync(User user);
-        Task<User> CreateAsync(CreateUserRequest request);
-
+        //Task<UserDto> CreateAsync(CreateUserRequest request);
+        Task<UserDto> CreateAsync(CreateUserRequest request,string currentUserRole);
         Task<bool> UpdateAsync(int id, UpdateUserRequest request);
         Task<bool> DeleteAsync(int id);
 

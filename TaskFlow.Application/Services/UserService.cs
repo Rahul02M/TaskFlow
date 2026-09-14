@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using TaskFlow.Application.DTOs.Users;
+using TaskFlow.Application.Exceptions;
 using TaskFlow.Application.Interfaces;
 using TaskFlow.Domain.Entities;
 using TaskFlow.Domain.Enums;
@@ -50,15 +51,42 @@ namespace TaskFlow.Application.Services
                 IsActive = user.IsActive
             };
         }
-        public async Task<User> CreateAsync(CreateUserRequest request)
+        public async Task<UserDto> CreateAsync(CreateUserRequest request, string currentUserRole)
         {
+            var existingUser = await _userRepository.GetByEmailAsync(request.Email);
+
+            if (existingUser != null)
+            {
+                throw new ConflictException("Email is already registered.");
+            }
+
+            if (!Enum.IsDefined(typeof(SystemRole), request.SystemRole))
+            {
+                throw new InvalidOperationException("Invalid system role.");
+            }
+            var requestedRole = (SystemRole)request.SystemRole;
+
+            if (currentUserRole == "Admin" &&
+                requestedRole != SystemRole.User)
+            {
+                throw new InvalidOperationException(
+                    "Admin can only create normal users.");
+            }
+
+            if (currentUserRole == "SuperAdmin" &&
+                requestedRole == SystemRole.SuperAdmin)
+            {
+                throw new InvalidOperationException(
+                    "SuperAdmin cannot create another SuperAdmin.");
+            }
+
             var user = new User
             {
                 Name = request.Name,
                 Email = request.Email,
                 CompanyId = request.CompanyId,
                 SystemRole = (SystemRole)request.SystemRole,
-                CreatedAt = DateTime.Now,
+                CreatedAt = DateTime.UtcNow,
                 IsActive = true,
                 IsDeleted = false
             };
@@ -69,22 +97,30 @@ namespace TaskFlow.Application.Services
 
             await _userRepository.AddAsync(user);
 
-            return user;
+            return new UserDto
+            {
+                Id = user.Id,
+                CompanyId = user.CompanyId,
+                Name = user.Name,
+                Email = user.Email,
+                SystemRole = (int)user.SystemRole,
+                CreatedAt = user.CreatedAt,
+                IsActive = user.IsActive
+            };
         }
-
         public async Task<bool> UpdateAsync( int id, UpdateUserRequest request)
         {
             var user = await _userRepository.GetByIdAsync(id);
 
             if (user == null)
-                return false;
+                throw new NotFoundException($"User with ID {id} was not found.");
 
             user.Name = request.Name;
             user.Email = request.Email;
             user.CompanyId = request.CompanyId;
             user.SystemRole = (SystemRole)request.SystemRole;
             user.IsActive = request.IsActive;
-            user.UpdatedAt = DateTime.UtcNow;
+            user.UpdatedAt = DateTime.Now;
 
             await _userRepository.UpdateAsync(user);
 
@@ -95,7 +131,7 @@ namespace TaskFlow.Application.Services
             var user = await _userRepository.GetByIdAsync(id);
 
             if (user == null)
-                return false;
+                throw new NotFoundException($"User with ID {id} was not found.");
 
             user.IsDeleted = true;
             user.IsActive = false;

@@ -7,7 +7,7 @@ namespace TaskFlow.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -36,23 +36,47 @@ namespace TaskFlow.Api.Controllers
             return Ok(user);
         }
 
+        //[HttpPost]
+        //public async Task<IActionResult> Create(CreateUserRequest request)
+        //{
+        //    var createdUser = await _userService.CreateAsync(request);
+
+        //    return CreatedAtAction(
+        //        nameof(GetById),
+        //        new { id = createdUser.Id },
+        //        createdUser);
+        //}
+
+
         [HttpPost]
         public async Task<IActionResult> Create(CreateUserRequest request)
         {
-            var createdUser = await _userService.CreateAsync(request);
+            var currentUserRole = User.FindFirst(
+                System.Security.Claims.ClaimTypes.Role)?.Value;
+
+            var createdUser = await _userService.CreateAsync(
+                request,
+                currentUserRole!);
 
             return Ok(createdUser);
         }
 
+
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, UpdateUserRequest request)
         {
-            var result = await _userService.UpdateAsync(id, request);
-
-            if (!result)
-                return NotFound();
+             await _userService.UpdateAsync(id, request);
 
             return NoContent();
+        }
+
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+             await _userService.DeleteAsync(id);
+           
+             return NoContent();
         }
     }
 }

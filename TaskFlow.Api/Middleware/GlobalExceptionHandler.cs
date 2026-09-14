@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Diagnostics;
 using System.Net;
 using System.Text.Json;
+using TaskFlow.Application.Exceptions;
 
 namespace TaskFlow.Api.Middleware;
 
@@ -24,10 +25,11 @@ public class GlobalExceptionHandler : IExceptionHandler
 
         var statusCode = exception switch
         {
+            NotFoundException => (int)HttpStatusCode.NotFound,
+            ConflictException => (int)HttpStatusCode.Conflict,
             InvalidOperationException => (int)HttpStatusCode.BadRequest,
             _ => (int)HttpStatusCode.InternalServerError
         };
-
         httpContext.Response.StatusCode = statusCode;
 
         var response = new

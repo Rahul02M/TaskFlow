@@ -29,7 +29,7 @@ namespace TaskFlow.Application.Services
         {
             var user = await _userRepository.GetByEmailAsync(request.Email);
 
-            if (user == null)
+            if (user == null || user.IsDeleted || !user.IsActive)
                 return null;
 
             var result = _passwordHasher.VerifyHashedPassword(
