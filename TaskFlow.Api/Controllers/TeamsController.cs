@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using TaskFlow.Application.DTOs.Teams;
 using TaskFlow.Application.Interfaces;
 using TaskFlow.Domain.Entities;
 
@@ -7,6 +9,7 @@ namespace TaskFlow.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public class TeamsController : ControllerBase
     {
         private readonly ITeamService _teamService;
@@ -16,6 +19,7 @@ namespace TaskFlow.Api.Controllers
             _teamService = teamService;
         }
 
+        // GET: api/Teams
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -24,6 +28,7 @@ namespace TaskFlow.Api.Controllers
             return Ok(teams);
         }
 
+        // GET: api/Teams/1
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -35,12 +40,36 @@ namespace TaskFlow.Api.Controllers
             return Ok(team);
         }
 
+        // POST: api/Teams
         [HttpPost]
-        public async Task<IActionResult> Create(Team team)
+        public async Task<IActionResult> Create(
+            CreateTeamRequest request)
         {
-            var createdTeam = await _teamService.CreateAsync(team);
+            var team = await _teamService.CreateAsync(request);
 
-            return Ok(createdTeam);
+            return CreatedAtAction(
+                nameof(GetById),
+                new { id = team.Id },
+                team);
+        }
+        // PUT: api/Teams/1
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(
+            int id,
+            UpdateTeamRequest request)
+        {
+            await _teamService.UpdateAsync(id, request);
+
+            return NoContent();
+        }
+
+        // DELETE: api/Teams/1
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            await _teamService.DeleteAsync(id);
+
+            return NoContent();
         }
     }
 }

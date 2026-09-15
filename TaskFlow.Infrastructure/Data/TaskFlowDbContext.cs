@@ -21,11 +21,20 @@ namespace TaskFlow.Infrastructure.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<Company>()
+                .HasIndex(c => c.Name)
+                .IsUnique();
+
             modelBuilder.Entity<Team>()
                  .HasOne(t => t.Company)
                  .WithMany(c => c.Teams)
                  .HasForeignKey(t => t.CompanyId)
                  .OnDelete(DeleteBehavior.Restrict);
+            
+            // Constraint: Team name must be unique within a company
+            modelBuilder.Entity<Team>()
+                .HasIndex(t => new { t.CompanyId, t.Name })
+                .IsUnique();
 
             modelBuilder.Entity<User>()
                  .HasOne(u => u.Company)
@@ -64,7 +73,7 @@ namespace TaskFlow.Infrastructure.Data
                 .WithMany(p => p.TaskItems)
                 .HasForeignKey(ti => ti.ProjectId)
                 .OnDelete(DeleteBehavior.Restrict);
-            
+
             modelBuilder.Entity<TaskItem>()
                 .HasOne(t => t.AssignedUser)
                 .WithMany(u => u.AssignedTasks)

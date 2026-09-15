@@ -20,11 +20,28 @@ namespace TaskFlow.Infrastructure.Repositories
                 .Where(x => !x.IsDeleted)
                 .ToListAsync();
         }
-
         public async Task<Team?> GetByIdAsync(int id)
         {
             return await _context.Teams
-                .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
+                .FirstOrDefaultAsync(x =>
+                    x.Id == id &&
+                    !x.IsDeleted);
+        }
+        public async Task<Team?> GetByNameAsync( string name, int companyId)
+        {
+            return await _context.Teams
+                .FirstOrDefaultAsync(x =>
+                    x.CompanyId == companyId &&
+                    x.Name.ToLower() == name.ToLower() &&
+                    !x.IsDeleted);
+        }
+
+        public async Task<bool> CompanyExistsAsync(int companyId)
+        {
+            return await _context.Companies
+                .AnyAsync(x =>
+                    x.Id == companyId &&
+                    !x.IsDeleted);
         }
 
         public async Task AddAsync(Team team)
@@ -42,7 +59,7 @@ namespace TaskFlow.Infrastructure.Repositories
         public async Task DeleteAsync(Team team)
         {
             team.IsDeleted = true;
-            team.DeletedAt = DateTime.UtcNow;
+            team.DeletedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
         }
