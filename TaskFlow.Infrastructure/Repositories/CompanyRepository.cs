@@ -27,6 +27,12 @@ namespace TaskFlow.Infrastructure.Repositories
                 .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
         }
 
+        public async Task<Company?> GetByNameAsync(string name)
+        {
+            return await _context.Companies
+                .FirstOrDefaultAsync(x => x.Name.ToLower() == name.ToLower() &&
+                    !x.IsDeleted);
+        }
         public async Task AddAsync(Company company)
         {
             await _context.Companies.AddAsync(company);

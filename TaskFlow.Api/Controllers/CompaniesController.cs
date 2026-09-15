@@ -1,12 +1,17 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.FileProviders;
+using TaskFlow.Application.DTOs.Companies;
 using TaskFlow.Application.Interfaces;
 using TaskFlow.Domain.Entities;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace TaskFlow.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public class CompaniesController : ControllerBase
     {
         private readonly ICompanyService _companyService;
@@ -34,11 +39,28 @@ namespace TaskFlow.Api.Controllers
             return Ok(company);
         }
         [HttpPost]
-        public async Task<IActionResult> Create(Company company)
+        public async Task<IActionResult> Create(CreateCompanyRequest request)
         {
-            var createdCompany = await _companyService.CreateAsync(company);
+            var company = await _companyService.CreateAsync(request);
 
-            return Ok(createdCompany);
+            return CreatedAtAction(nameof(GetById), new { id = company.Id }, company);
         }
+        // PUT: api/Companies/1
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, UpdateCompanyRequest request)
+        {
+            await _companyService.UpdateAsync(id, request);
+            return NoContent();
+        }
+
+        // DELETE: api/Companies/1
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            await _companyService.DeleteAsync(id);
+
+            return NoContent();
+        }
+
     }
 }

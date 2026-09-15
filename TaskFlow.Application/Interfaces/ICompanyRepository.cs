@@ -10,6 +10,7 @@ namespace TaskFlow.Application.Interfaces
         Task<List<Company>> GetAllAsync();
 
         Task<Company?> GetByIdAsync(int id);
+        Task<Company?> GetByNameAsync(string name);
 
         Task AddAsync(Company company);
 

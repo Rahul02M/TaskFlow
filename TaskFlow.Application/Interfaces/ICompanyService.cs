@@ -1,17 +1,17 @@
-﻿using TaskFlow.Domain.Entities;
+﻿using TaskFlow.Application.DTOs.Companies;
+using TaskFlow.Domain.Entities;
 
 namespace TaskFlow.Application.Interfaces
 {
     public interface ICompanyService
     {
-        Task<List<Company>> GetAllAsync();
+        Task<List<CompanyDto>> GetAllAsync();
 
-        Task<Company?> GetByIdAsync(int id);
+        Task<CompanyDto?> GetByIdAsync(int id);
 
-        Task<Company> CreateAsync(Company company);
+        Task<CompanyDto> CreateAsync(CreateCompanyRequest request);
 
-        Task<bool> UpdateAsync(Company company);
-
-        Task<bool> DeleteAsync(int id);
+        Task UpdateAsync(int id, UpdateCompanyRequest request);
+        Task DeleteAsync(int id);
     }
 }
