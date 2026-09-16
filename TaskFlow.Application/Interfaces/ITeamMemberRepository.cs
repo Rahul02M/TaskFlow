@@ -15,5 +15,9 @@ namespace TaskFlow.Application.Interfaces
         Task DeleteAsync(TeamMember teamMember);
 
         Task<bool> ExistsAsync(int userId, int teamId);
+
+        Task<bool> UserExistsAsync(int userId);
+
+        Task<bool> TeamExistsAsync(int teamId);
     }
 }

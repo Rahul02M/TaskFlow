@@ -5,14 +5,8 @@ using System.Text;
 
 namespace TaskFlow.Application.DTOs.TeamMembers
 {
-    public class CreateTeamMemberRequest
+    public  class UpdateTeamMemberRequest
     {
-        [Required]
-        public int UserId { get; set; }
-
-        [Required]
-        public int TeamId { get; set; }
-
         [Required]
         public int TeamRole { get; set; }
     }

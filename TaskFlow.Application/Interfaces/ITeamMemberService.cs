@@ -9,9 +9,9 @@ namespace TaskFlow.Application.Interfaces
 
         Task<TeamMemberDto?> GetByIdAsync(int id);
 
-        Task<TeamMemberDto> CreateAsync(TeamMember teamMember);
+        Task<TeamMemberDto> CreateAsync(CreateTeamMemberRequest request);
 
-        Task<bool> UpdateAsync(TeamMember teamMember);
+        Task<bool> UpdateAsync(int id, UpdateTeamMemberRequest request);
 
         Task<bool> DeleteAsync(int id);
     }

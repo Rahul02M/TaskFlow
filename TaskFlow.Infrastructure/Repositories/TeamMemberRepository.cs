@@ -58,5 +58,21 @@ namespace TaskFlow.Infrastructure.Repositories
                     x.TeamId == teamId &&
                     !x.IsDeleted);
         }
+        public async Task<bool> UserExistsAsync(int userId)
+        {
+            return await _context.Users
+                .AnyAsync(x =>
+                    x.Id == userId &&
+                    !x.IsDeleted &&
+                    x.IsActive);
+        }
+
+        public async Task<bool> TeamExistsAsync(int teamId)
+        {
+            return await _context.Teams
+                .AnyAsync(x =>
+                    x.Id == teamId &&
+                    !x.IsDeleted);
+        }
     }
 }

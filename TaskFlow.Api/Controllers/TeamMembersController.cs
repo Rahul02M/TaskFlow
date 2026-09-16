@@ -36,18 +36,11 @@ namespace TaskFlow.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(CreateTeamMemberRequest request)
+        public async Task<IActionResult> Create( CreateTeamMemberRequest request)
         {
-            var teamMember = new TeamMember
-            {
-                UserId = request.UserId,
-                TeamId = request.TeamId,
-                TeamRole = (TaskFlow.Domain.Enums.TeamRole)request.TeamRole
-            };
             try
             {
-                var createdTeamMember =
-                    await _teamMemberService.CreateAsync(teamMember);
+                var createdTeamMember = await _teamMemberService.CreateAsync(request);
 
                 return Ok(createdTeamMember);
             }
@@ -57,17 +50,15 @@ namespace TaskFlow.Api.Controllers
                 {
                     message = ex.Message
                 });
-            };
+            }
         }
 
-
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, TeamMember teamMember)
+        public async Task<IActionResult> Update(int id, UpdateTeamMemberRequest request)
         {
-            if (id != teamMember.Id)
-                return BadRequest();
+            var result =
+                await _teamMemberService.UpdateAsync(id, request);
 
-            var result = await _teamMemberService.UpdateAsync(teamMember);
             if (!result)
                 return NotFound();
 

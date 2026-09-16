@@ -44,25 +44,52 @@ namespace TaskFlow.Application.Services
                 TeamRole = (int)teamMember.TeamRole
             };
         }
-        public async Task<TeamMemberDto> CreateAsync(TeamMember teamMember)
+        public async Task<TeamMemberDto> CreateAsync(CreateTeamMemberRequest request)
         {
+            // 1. Check user exists
+            var userExists = await _teamMemberRepository.UserExistsAsync(request.UserId);
+            if (!userExists)
+                throw new InvalidOperationException("User does not exist or is inactive.");
+
             var exists = await _teamMemberRepository
-            .ExistsAsync(teamMember.UserId, teamMember.TeamId);
+            .ExistsAsync(request.UserId, request.TeamId);
 
-            if (exists)
-                throw new InvalidOperationException(
-                    "User is already a member of this team.");
 
-            teamMember.IsDeleted = false;
+            // 2. Check team exists
+            var teamExists = await _teamMemberRepository.TeamExistsAsync(request.TeamId);
 
+            if (!teamExists)
+                throw new InvalidOperationException("Team does not exist.");
+
+            // 3. Check duplicate membership
+            var alreadyExists =
+                await _teamMemberRepository.ExistsAsync(
+                    request.UserId,
+                    request.TeamId);
+
+            if (alreadyExists)
+                throw new InvalidOperationException( "User is already a member of this team.");
+
+            // 4. Create entity
+            var teamMember = new TeamMember
+            {
+                UserId = request.UserId,
+                TeamId = request.TeamId,
+                TeamRole = (TaskFlow.Domain.Enums.TeamRole)request.TeamRole,
+                IsDeleted = false
+            };
+            // 5. Save
             await _teamMemberRepository.AddAsync(teamMember);
 
+            // 6. Get created record with User + Team
             var createdTeamMember =
                 await _teamMemberRepository.GetByIdAsync(teamMember.Id);
 
             if (createdTeamMember == null)
-                throw new Exception("Created team member could not be found.");
+                throw new Exception(
+                    "Created team member could not be found.");
 
+            // 7. Return DTO
             return new TeamMemberDto
             {
                 Id = createdTeamMember.Id,
@@ -74,17 +101,15 @@ namespace TaskFlow.Application.Services
             };
         }
 
-        public async Task<bool> UpdateAsync(TeamMember teamMember)
+
+        public async Task<bool> UpdateAsync( int id, UpdateTeamMemberRequest request)
         {
-            var existingTeamMember =
-                await _teamMemberRepository.GetByIdAsync(teamMember.Id);
+            var existingTeamMember = await _teamMemberRepository.GetByIdAsync(id);
 
             if (existingTeamMember == null)
                 return false;
 
-            existingTeamMember.UserId = teamMember.UserId;
-            existingTeamMember.TeamId = teamMember.TeamId;
-            existingTeamMember.TeamRole = teamMember.TeamRole;
+            existingTeamMember.TeamRole = (TaskFlow.Domain.Enums.TeamRole)request.TeamRole;
 
             await _teamMemberRepository.UpdateAsync(existingTeamMember);
 
