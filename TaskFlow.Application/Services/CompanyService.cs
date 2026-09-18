@@ -52,7 +52,7 @@ namespace TaskFlow.Application.Services
             var company = new Company
             {
                 Name = request.Name.Trim(),
-                CreatedAt = DateTime.Now,
+                CreatedAt = DateTime.UtcNow,
                 IsDeleted = false
             };
 

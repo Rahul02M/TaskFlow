@@ -8,10 +8,10 @@ namespace TaskFlow.Application.Interfaces
 {
     public interface IProjectService
     {
-        Task<List<Project>> GetAllAsync();
-        Task<Project?> GetByIdAsync(int id);
-        Task<Project> CreateAsync(CreateProjectRequest request);
-        Task<bool> UpdateAsync(Project project);
+        Task<List<ProjectDto>> GetAllAsync();
+        Task<ProjectDto?> GetByIdAsync(int id);
+        Task<ProjectDto> CreateAsync(CreateProjectRequest request);
+        Task<bool> UpdateAsync(int id, UpdateProjectRequest request);
         Task<bool> DeleteAsync( int id);
 
 

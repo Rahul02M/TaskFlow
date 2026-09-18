@@ -17,10 +17,10 @@ public class CreateTaskItemRequest
     [StringLength(2000)]
     public string Description { get; set; } = string.Empty;
 
-    [Range(0, 3)]
+    [Range(0, 4)]
     public int TaskStatus { get; set; }
 
-    [Range(0, 3)]
+    [Range(0, 2)]
     public int TaskPriority { get; set; }
 
     public DateTime? DueDate { get; set; }

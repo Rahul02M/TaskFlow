@@ -73,7 +73,7 @@ namespace TaskFlow.Application.Services
             {
                 CompanyId = request.CompanyId,
                 Name = request.Name.Trim(),
-                CreatedAt = DateTime.Now,
+                CreatedAt = DateTime.UtcNow,
                 IsDeleted = false
             };
 

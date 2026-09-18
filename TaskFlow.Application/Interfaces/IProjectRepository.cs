@@ -9,6 +9,8 @@ namespace TaskFlow.Application.Interfaces
     {
         Task<List<Project>> GetAllAsync();
         Task<Project?> GetByIdAsync(int id);
+        Task<Project?> GetByNameAsync(string name, int teamId);
+        Task<bool> TeamExistsAsync(int teamId);
         Task AddAsync(Project project);
         Task UpdateAsync(Project project);
         Task DeleteAsync(Project project);

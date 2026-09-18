@@ -120,7 +120,7 @@ namespace TaskFlow.Application.Services
             user.CompanyId = request.CompanyId;
             user.SystemRole = (SystemRole)request.SystemRole;
             user.IsActive = request.IsActive;
-            user.UpdatedAt = DateTime.Now;
+            user.UpdatedAt = DateTime.UtcNow;
 
             await _userRepository.UpdateAsync(user);
 
@@ -135,7 +135,7 @@ namespace TaskFlow.Application.Services
 
             user.IsDeleted = true;
             user.IsActive = false;
-            user.DeletedAt = DateTime.Now;
+            user.DeletedAt = DateTime.UtcNow;
 
             await _userRepository.UpdateAsync(user);
 

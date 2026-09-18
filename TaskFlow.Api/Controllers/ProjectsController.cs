@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using TaskFlow.Application.DTOs.Projects;
+using TaskFlow.Application.Exceptions;
 using TaskFlow.Application.Interfaces;
 using TaskFlow.Domain.Entities;
 
@@ -40,21 +41,32 @@ namespace TaskFlow.Api.Controllers
         {
             var project = await _projectService.CreateAsync(request);
 
-            return Ok(project);
+            return CreatedAtAction( nameof(GetById),new { id = project.Id },
+            project);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, Project project)
+        public async Task<IActionResult> Update(int id, UpdateProjectRequest request)
         {
-            if (id != project.Id)
-                return BadRequest();
+            try
+            {
+                var result = await _projectService.UpdateAsync(id, request);
 
-            var result = await _projectService.UpdateAsync(project);
+                if (!result)
+                {
+                    throw new NotFoundException("Project not found.");
+                }
 
-            if (!result)
-                return NotFound();
-
-            return NoContent();
+                return NoContent();
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ConflictException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
         }
 
         [HttpDelete("{id}")]

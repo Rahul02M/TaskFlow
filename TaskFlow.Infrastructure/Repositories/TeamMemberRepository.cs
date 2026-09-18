@@ -46,7 +46,7 @@ namespace TaskFlow.Infrastructure.Repositories
         public async Task DeleteAsync(TeamMember teamMember)
         {
             teamMember.IsDeleted = true;
-            teamMember.DeletedAt = DateTime.Now;
+            teamMember.DeletedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
         }

@@ -5,12 +5,8 @@ using System.Text;
 
 namespace TaskFlow.Application.DTOs.Projects
 {
-    public class CreateProjectRequest
+    public class UpdateProjectRequest
     {
-        [Required]
-        [Range(1, int.MaxValue)]
-        public int TeamId { get; set; }
-
         [Required]
         [StringLength(200, MinimumLength = 3)]
         public string Name { get; set; } = string.Empty;

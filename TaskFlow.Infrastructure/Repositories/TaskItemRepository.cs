@@ -39,14 +39,13 @@ namespace TaskFlow.Infrastructure.Repositories
 
         public async Task UpdateAsync(TaskItem taskItem)
         {
-            _context.TaskItems.Update(taskItem);
             await _context.SaveChangesAsync();
         }
 
         public async Task DeleteAsync(TaskItem taskItem)
         {
             taskItem.IsDeleted = true;
-            taskItem.DeletedAt = DateTime.Now;
+            taskItem.DeletedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
         }

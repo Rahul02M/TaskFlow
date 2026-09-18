@@ -1,4 +1,5 @@
 ﻿using TaskFlow.Application.DTOs.TaskItems;
+using TaskFlow.Application.Exceptions;
 using TaskFlow.Application.Interfaces;
 using TaskFlow.Domain.Entities;
 using TaskFlow.Domain.Enums;
@@ -42,7 +43,9 @@ namespace TaskFlow.Application.Services
             var projectExists = await _projectRepository.ExistsAsync(request.ProjectId);
 
             if (!projectExists)
-                throw new InvalidOperationException("Project does not exist or is inactive.");
+            {
+                throw new NotFoundException($"Project with ID {request.ProjectId} was not found.");
+            }
 
             if (request.AssignedUserId.HasValue)
             {
@@ -50,7 +53,17 @@ namespace TaskFlow.Application.Services
                     await _userRepository.ExistsAsync(request.AssignedUserId.Value);
 
                 if (!userExists)
-                    throw new InvalidOperationException("Assigned user does not exist or is inactive.");
+                    throw new NotFoundException($"User with ID {request.AssignedUserId.Value} was not found.");
+            }
+
+            if (!Enum.IsDefined(typeof(TaskItemStatus), request.TaskStatus))
+            {
+                throw new InvalidOperationException("Invalid task status.");
+            }
+
+            if (!Enum.IsDefined(typeof(TaskPriority), request.TaskPriority))
+            {
+                throw new InvalidOperationException("Invalid task priority.");
             }
 
             var taskItem = new TaskItem
@@ -62,7 +75,7 @@ namespace TaskFlow.Application.Services
                 TaskStatus = (TaskItemStatus)request.TaskStatus,
                 TaskPriority = (TaskPriority)request.TaskPriority,
                 DueDate = request.DueDate,
-                CreatedAt = DateTime.Now,
+                CreatedAt = DateTime.UtcNow,
                 IsDeleted = false
             };
 
@@ -82,18 +95,42 @@ namespace TaskFlow.Application.Services
 
             if (existingTask == null)
                 return false;
+            if (!await _projectRepository.ExistsAsync(request.ProjectId))
+            {
+                throw new NotFoundException(
+                    $"Project with ID {request.ProjectId} was not found.");
+            }
+            if (request.AssignedUserId.HasValue)
+            {
+                var userExists = await _userRepository.ExistsAsync(request.AssignedUserId.Value);
+
+                if (!userExists)
+                {
+                    throw new NotFoundException(
+                        $"User with ID {request.AssignedUserId.Value} was not found.");
+                }
+            }
+            if (!Enum.IsDefined(typeof(TaskItemStatus),request.TaskStatus))
+            {
+                throw new InvalidOperationException("Invalid task status.");
+            }
+
+            if (!Enum.IsDefined(typeof(TaskPriority),request.TaskPriority))
+            {
+                throw new InvalidOperationException("Invalid task priority.");
+            }
 
             existingTask.ProjectId = request.ProjectId;
             existingTask.AssignedUserId = request.AssignedUserId;
-            existingTask.Title = request.Title;
-            existingTask.Description = request.Description;
+            existingTask.Title = request.Title.Trim();
+            existingTask.Description =request.Description?.Trim() ?? string.Empty;
 
             existingTask.TaskStatus = (TaskItemStatus)request.TaskStatus;
             existingTask.TaskPriority = (TaskPriority)request.TaskPriority;
 
             existingTask.DueDate = request.DueDate;
             existingTask.CompletedAt = request.CompletedAt;
-            existingTask.UpdatedAt = DateTime.Now;
+            existingTask.UpdatedAt = DateTime.UtcNow;
 
             await _taskItemRepository.UpdateAsync(existingTask);
 
@@ -102,8 +139,7 @@ namespace TaskFlow.Application.Services
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var taskItem =
-                await _taskItemRepository.GetByIdAsync(id);
+            var taskItem = await _taskItemRepository.GetByIdAsync(id);
 
             if (taskItem == null)
                 return false;

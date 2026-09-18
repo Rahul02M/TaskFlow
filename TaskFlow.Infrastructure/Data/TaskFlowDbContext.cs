@@ -63,10 +63,13 @@ namespace TaskFlow.Infrastructure.Data
                 .WithMany(t => t.Projects)
                 .HasForeignKey(p => p.TeamId)
                 .OnDelete(DeleteBehavior.Restrict);
-            //constraint 
+
+            // Active project names must be unique within a team.
+            // Soft-deleted projects do not participate in the unique constraint.
             modelBuilder.Entity<Project>()
                 .HasIndex(p => new { p.TeamId, p.Name })
-                .IsUnique();
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0");
 
             modelBuilder.Entity<TaskItem>()
                 .HasOne(ti => ti.Project)

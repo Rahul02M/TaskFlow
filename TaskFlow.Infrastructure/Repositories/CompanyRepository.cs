@@ -48,7 +48,7 @@ namespace TaskFlow.Infrastructure.Repositories
         public async Task DeleteAsync(Company company)
         {
             company.IsDeleted = true;
-            company.DeletedAt = DateTime.Now;
+            company.DeletedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
         }
