@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using TaskFlow.Application.DTOs.Projects;
 using TaskFlow.Application.Exceptions;
@@ -9,6 +10,7 @@ namespace TaskFlow.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class ProjectsController : ControllerBase
     {
         private readonly IProjectService _projectService;
@@ -36,6 +38,7 @@ namespace TaskFlow.Api.Controllers
 
             return Ok(project);
         }
+        
         [HttpPost]
         public async Task<IActionResult> Create(CreateProjectRequest request)
         {

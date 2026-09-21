@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TaskFlow.Application.DTOs.TeamMembers;
 using TaskFlow.Application.Interfaces;
 using TaskFlow.Domain.Entities;
@@ -7,6 +8,7 @@ namespace TaskFlow.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class TeamMembersController : ControllerBase
     {
         private readonly ITeamMemberService _teamMemberService;

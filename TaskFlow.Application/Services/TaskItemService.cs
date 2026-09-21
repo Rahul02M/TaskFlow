@@ -70,11 +70,13 @@ namespace TaskFlow.Application.Services
             {
                 ProjectId = request.ProjectId,
                 AssignedUserId = request.AssignedUserId,
-                Title = request.Title,
-                Description = request.Description,
+                Title = request.Title.Trim(),
+                Description = request.Description?.Trim() ?? string.Empty,
                 TaskStatus = (TaskItemStatus)request.TaskStatus,
                 TaskPriority = (TaskPriority)request.TaskPriority,
                 DueDate = request.DueDate,
+                CompletedAt = request.TaskStatus == (int)TaskItemStatus.Completed
+                ? DateTime.UtcNow: null,
                 CreatedAt = DateTime.UtcNow,
                 IsDeleted = false
             };
@@ -129,7 +131,14 @@ namespace TaskFlow.Application.Services
             existingTask.TaskPriority = (TaskPriority)request.TaskPriority;
 
             existingTask.DueDate = request.DueDate;
-            existingTask.CompletedAt = request.CompletedAt;
+            if (existingTask.TaskStatus == TaskItemStatus.Completed)
+            {
+                existingTask.CompletedAt = request.CompletedAt ?? DateTime.UtcNow;
+            }
+            else
+            {
+                existingTask.CompletedAt = null;
+            }
             existingTask.UpdatedAt = DateTime.UtcNow;
 
             await _taskItemRepository.UpdateAsync(existingTask);

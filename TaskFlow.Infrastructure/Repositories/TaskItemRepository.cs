@@ -19,7 +19,7 @@ namespace TaskFlow.Infrastructure.Repositories
             return await _context.TaskItems
               .Include(x => x.Project)
               .Include(x => x.AssignedUser)
-              .Where(x => !x.IsDeleted)
+              .Where(x => !x.IsDeleted && !x.Project.IsDeleted)
               .ToListAsync();
         }
 
@@ -28,7 +28,8 @@ namespace TaskFlow.Infrastructure.Repositories
             return await _context.TaskItems
                 .Include(x => x.Project)
                 .Include(x => x.AssignedUser)
-                .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
+                //.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
+                .FirstOrDefaultAsync(x =>x.Id == id && !x.IsDeleted && !x.Project.IsDeleted);
         }
 
         public async Task AddAsync(TaskItem taskItem)

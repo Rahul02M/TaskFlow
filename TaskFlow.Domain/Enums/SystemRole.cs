@@ -10,6 +10,6 @@ namespace TaskFlow.Domain.Enums
         Admin,
         SuperAdmin
     }
-
+    
    
 }
