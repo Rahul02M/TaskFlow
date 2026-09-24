@@ -70,6 +70,10 @@ namespace TaskFlow.Application.Services
                     user.Id.ToString()),
 
                 new Claim(
+                    ClaimTypes.NameIdentifier,
+                    user.Id.ToString()),
+
+                new Claim(
                     ClaimTypes.Name,
                     user.Name),
 

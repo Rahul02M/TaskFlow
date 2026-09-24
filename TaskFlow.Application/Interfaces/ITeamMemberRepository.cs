@@ -19,5 +19,8 @@ namespace TaskFlow.Application.Interfaces
         Task<bool> UserExistsAsync(int userId);
 
         Task<bool> TeamExistsAsync(int teamId);
+
+        Task<TeamMember?> GetByUserIdAndTeamIdAsync(int userId, int teamId);
+
     }
 }

@@ -1,5 +1,4 @@
 ﻿using TaskFlow.Application.DTOs.TaskItems;
-using TaskFlow.Domain.Entities;
 
 namespace TaskFlow.Application.Interfaces
 {

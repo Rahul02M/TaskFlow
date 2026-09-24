@@ -15,5 +15,6 @@ namespace TaskFlow.Application.Interfaces
         Task UpdateAsync(Project project);
         Task DeleteAsync(Project project);
         Task<bool> ExistsAsync(int id);
+        Task<int?> GetTeamIdAsync(int projectId);
     }
 }

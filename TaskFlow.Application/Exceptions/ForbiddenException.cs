@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace TaskFlow.Application.Exceptions;
 
-namespace TaskFlow.Application.Exceptions
+public class ForbiddenException : Exception
 {
-    public  class ForbiddenException
+    public ForbiddenException(string message)
+        : base(message)
     {
     }
 }

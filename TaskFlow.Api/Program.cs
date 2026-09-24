@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
-
 using Microsoft.OpenApi;
+using System.Text;
 using TaskFlow.Api.Middleware;
+using TaskFlow.Api.Services;
 using TaskFlow.Application.Interfaces;
 using TaskFlow.Application.Services;
 using TaskFlow.Infrastructure.Data;
@@ -60,6 +60,11 @@ builder.Services.AddProblemDetails();
 //builder.Services.AddOpenApi();
 
 builder.Services.AddEndpointsApiExplorer();
+
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+
 
 
 builder.Services.AddScoped<IProjectRepository, ProjectRepository>();

@@ -31,6 +31,38 @@ namespace TaskFlow.Infrastructure.Repositories
                 //.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
                 .FirstOrDefaultAsync(x =>x.Id == id && !x.IsDeleted && !x.Project.IsDeleted);
         }
+        public async Task<List<TaskItem>> GetAllByUserIdAsync(int userId)
+        {
+            return await _context.TaskItems
+                .Include(x => x.Project)
+                    .ThenInclude(x => x.Team)
+                        .ThenInclude(x => x!.TeamMembers)
+                .Include(x => x.AssignedUser)
+                .Where(x =>
+                    !x.IsDeleted &&
+                    !x.Project.IsDeleted &&
+                    x.Project.Team != null &&
+                    x.Project.Team.TeamMembers.Any(tm =>
+                        tm.UserId == userId &&
+                        !tm.IsDeleted))
+                .ToListAsync();
+        }
+        public async Task<TaskItem?> GetByIdForUserAsync(int id, int userId)
+        {
+            return await _context.TaskItems
+                .Include(x => x.Project)
+                    .ThenInclude(x => x.Team)
+                        .ThenInclude(x => x!.TeamMembers)
+                .Include(x => x.AssignedUser)
+                .FirstOrDefaultAsync(x =>
+                    x.Id == id &&
+                    !x.IsDeleted &&
+                    !x.Project.IsDeleted &&
+                    x.Project.Team != null &&
+                    x.Project.Team.TeamMembers.Any(tm =>
+                        tm.UserId == userId &&
+                        !tm.IsDeleted));
+        }
 
         public async Task AddAsync(TaskItem taskItem)
         {

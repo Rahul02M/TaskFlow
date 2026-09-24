@@ -13,7 +13,6 @@ namespace TaskFlow.Infrastructure.Repositories
         {
             _context = context;
         }
-
         public async Task<List<User>> GetAllAsync()
         {
             return await _context.Users
@@ -52,7 +51,7 @@ namespace TaskFlow.Infrastructure.Repositories
             return await _context.Users
                 .AnyAsync(x => x.Id == id && !x.IsDeleted && x.IsActive);
         }
-
+        
         public async Task<User?> GetByEmailAsync(string email)
         {
             return await _context.Users

@@ -72,5 +72,13 @@ namespace TaskFlow.Infrastructure.Repositories
                     p.Id == id &&
                     !p.IsDeleted);
         }
+
+        public async Task<int?> GetTeamIdAsync(int projectId)
+        {
+            return await _context.Projects
+                .Where(p => p.Id == projectId && !p.IsDeleted)
+                .Select(p => (int?)p.TeamId)
+                .FirstOrDefaultAsync();
+        }
     }
 }

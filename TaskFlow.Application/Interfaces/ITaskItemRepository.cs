@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using TaskFlow.Domain.Entities;
+﻿using TaskFlow.Domain.Entities;
 
 namespace TaskFlow.Application.Interfaces
 {
@@ -9,6 +6,8 @@ namespace TaskFlow.Application.Interfaces
     {
         Task<List<TaskItem>> GetAllAsync();
         Task<TaskItem?> GetByIdAsync(int id);
+        Task<List<TaskItem>> GetAllByUserIdAsync(int userId);
+        Task<TaskItem?> GetByIdForUserAsync(int id, int userId);
         Task AddAsync(TaskItem taskItem);
         Task UpdateAsync(TaskItem taskItem);
         Task DeleteAsync(TaskItem taskItem);

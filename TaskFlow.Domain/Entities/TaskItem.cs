@@ -8,7 +8,7 @@ namespace TaskFlow.Domain.Entities
         public int Id { get; set; }
 
         public int ProjectId { get; set; }
-        public Project? Project { get; set; }
+        public Project Project { get; set; } = null!;
 
         public int? AssignedUserId { get; set; }
         public User? AssignedUser { get; set; }

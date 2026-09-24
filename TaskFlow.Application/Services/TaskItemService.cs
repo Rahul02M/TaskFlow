@@ -11,31 +11,36 @@ namespace TaskFlow.Application.Services
         private readonly ITaskItemRepository _taskItemRepository;
         private readonly IProjectRepository _projectRepository;
         private readonly IUserRepository _userRepository;
+        private readonly ITeamMemberRepository _teamMemberRepository;
+        private readonly ICurrentUserService _currentUserService;
 
-
-        public TaskItemService(ITaskItemRepository taskItemRepository, IProjectRepository projectRepository, IUserRepository userRepository)
+        public TaskItemService(ITaskItemRepository taskItemRepository, IProjectRepository projectRepository, IUserRepository userRepository, ITeamMemberRepository teamMemberRepository,
+        ICurrentUserService currentUserService)
         {
             _taskItemRepository = taskItemRepository;
             _projectRepository = projectRepository;
             _userRepository = userRepository;
+            _teamMemberRepository = teamMemberRepository;
+            _currentUserService = currentUserService;
         }
 
         public async Task<List<TaskItemDto>> GetAllAsync()
         {
-            var tasks = await _taskItemRepository.GetAllAsync();
+            var tasks = await _taskItemRepository.GetAllByUserIdAsync(
+                _currentUserService.UserId);
 
             return tasks.Select(MapToDto).ToList();
         }
-
         public async Task<TaskItemDto?> GetByIdAsync(int id)
         {
-            var task = await _taskItemRepository.GetByIdAsync(id);
+            var task = await _taskItemRepository.GetByIdForUserAsync(
+                id,
+                _currentUserService.UserId);
 
             if (task == null)
                 return null;
 
             return MapToDto(task);
-           
         }
 
         public async Task<TaskItemDto> CreateAsync(CreateTaskItemRequest request)
@@ -47,6 +52,11 @@ namespace TaskFlow.Application.Services
                 throw new NotFoundException($"Project with ID {request.ProjectId} was not found.");
             }
 
+            if (!await HasProjectAccessAsync(request.ProjectId))
+            {
+                throw new ForbiddenException(
+                    "You do not have access to this project.");
+            }
             if (request.AssignedUserId.HasValue)
             {
                 var userExists =
@@ -97,11 +107,24 @@ namespace TaskFlow.Application.Services
 
             if (existingTask == null)
                 return false;
+
+            // Check access to the task's current project
+            if (!await HasProjectAccessAsync(existingTask.ProjectId))
+            {
+                throw new ForbiddenException(
+                    "You do not have access to this task.");
+            }
+
             if (!await _projectRepository.ExistsAsync(request.ProjectId))
             {
-                throw new NotFoundException(
-                    $"Project with ID {request.ProjectId} was not found.");
+                throw new NotFoundException($"Project with ID {request.ProjectId} was not found.");
             }
+            if (!await HasProjectAccessAsync(request.ProjectId))
+            {
+                throw new ForbiddenException(
+                    "You do not have access to this project.");
+            }
+
             if (request.AssignedUserId.HasValue)
             {
                 var userExists = await _userRepository.ExistsAsync(request.AssignedUserId.Value);
@@ -152,10 +175,29 @@ namespace TaskFlow.Application.Services
 
             if (taskItem == null)
                 return false;
-
+            if (!await HasProjectAccessAsync(taskItem.ProjectId))
+            {
+                throw new ForbiddenException(
+                    "You do not have access to this task.");
+            }
             await _taskItemRepository.DeleteAsync(taskItem);
 
             return true;
+        }
+
+        private async Task<bool> HasProjectAccessAsync(int projectId)
+        {
+            var teamId = await _projectRepository.GetTeamIdAsync(projectId);
+
+            if (!teamId.HasValue)
+                return false;
+
+            var teamMember =
+                await _teamMemberRepository.GetByUserIdAndTeamIdAsync(
+                    _currentUserService.UserId,
+                    teamId.Value);
+
+            return teamMember != null;
         }
 
         private TaskItemDto MapToDto(TaskItem task)
