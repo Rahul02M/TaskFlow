@@ -5,7 +5,7 @@ using TaskFlow.Domain.Entities;
 
 namespace TaskFlow.Application.Interfaces
 {
-    public  interface IProjectRepository
+    public interface IProjectRepository
     {
         Task<List<Project>> GetAllAsync();
         Task<Project?> GetByIdAsync(int id);
@@ -16,5 +16,8 @@ namespace TaskFlow.Application.Interfaces
         Task DeleteAsync(Project project);
         Task<bool> ExistsAsync(int id);
         Task<int?> GetTeamIdAsync(int projectId);
+        Task<List<Project>> GetAllByUserIdAsync(int userId);
+        Task<Project?> GetByIdForUserAsync(int id, int userId);
+
     }
 }

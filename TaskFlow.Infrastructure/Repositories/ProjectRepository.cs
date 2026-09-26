@@ -28,7 +28,110 @@ namespace TaskFlow.Infrastructure.Repositories
                 .FirstOrDefaultAsync(p =>
                     p.Id == id && !p.IsDeleted);
         }
+        public async Task<List<Project>> GetAllByUserIdAsync(int userId)
+        {
+            var user = await _context.Users
+                .Where(u => u.Id == userId && !u.IsDeleted && u.IsActive)
+                .Select(u => new
+                {
+                    u.CompanyId,
+                    u.SystemRole
+                })
+                .FirstOrDefaultAsync();
 
+            if (user == null)
+                return new List<Project>();
+
+            // SuperAdmin can access all active projects
+            if (user.SystemRole == Domain.Enums.SystemRole.SuperAdmin)
+            {
+                return await _context.Projects
+                    .Include(p => p.Team)
+                    .Where(p =>
+                        !p.IsDeleted &&
+                        p.Team != null &&
+                        !p.Team.IsDeleted)
+                    .ToListAsync();
+            }
+
+            // Admin can access all active projects in their company
+            if (user.SystemRole == Domain.Enums.SystemRole.Admin)
+            {
+                return await _context.Projects
+                    .Include(p => p.Team)
+                    .Where(p =>
+                        !p.IsDeleted &&
+                        p.Team != null &&
+                        !p.Team.IsDeleted &&
+                        p.Team.CompanyId == user.CompanyId)
+                    .ToListAsync();
+            }
+
+            // Normal User can access only active projects
+            // belonging to active teams they are an active member of
+            return await _context.Projects
+                .Include(p => p.Team)
+                .Where(p =>
+                    !p.IsDeleted &&
+                    p.Team != null &&
+                    !p.Team.IsDeleted &&
+                    p.Team.TeamMembers.Any(tm =>
+                        tm.UserId == userId &&
+                        !tm.IsDeleted))
+                .ToListAsync();
+        }
+        public async Task<Project?> GetByIdForUserAsync(int id, int userId)
+        {
+            var user = await _context.Users
+                .Where(u => u.Id == userId && !u.IsDeleted && u.IsActive)
+                .Select(u => new
+                {
+                    u.CompanyId,
+                    u.SystemRole
+                })
+                .FirstOrDefaultAsync();
+
+            if (user == null)
+                return null;
+
+            // SuperAdmin can access all active projects
+            if (user.SystemRole == Domain.Enums.SystemRole.SuperAdmin)
+            {
+                return await _context.Projects
+                    .Include(p => p.Team)
+                    .FirstOrDefaultAsync(p =>
+                        p.Id == id &&
+                        !p.IsDeleted &&
+                        p.Team != null &&
+                        !p.Team.IsDeleted);
+            }
+
+            // Admin can access active projects in their company
+            if (user.SystemRole == Domain.Enums.SystemRole.Admin)
+            {
+                return await _context.Projects
+                    .Include(p => p.Team)
+                    .FirstOrDefaultAsync(p =>
+                        p.Id == id &&
+                        !p.IsDeleted &&
+                        p.Team != null &&
+                        !p.Team.IsDeleted &&
+                        p.Team.CompanyId == user.CompanyId);
+            }
+
+            // Normal User can access only active projects
+            // belonging to active teams they are an active member of
+            return await _context.Projects
+                .Include(p => p.Team)
+                .FirstOrDefaultAsync(p =>
+                    p.Id == id &&
+                    !p.IsDeleted &&
+                    p.Team != null &&
+                    !p.Team.IsDeleted &&
+                    p.Team.TeamMembers.Any(tm =>
+                        tm.UserId == userId &&
+                        !tm.IsDeleted));
+        }
         public async Task<Project?> GetByNameAsync(string name, int teamId)
         {
             var normalizedName = name.Trim().ToLower();

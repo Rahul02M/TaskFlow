@@ -7,7 +7,7 @@ namespace TaskFlow.Infrastructure.Repositories
 {
     public class TeamMemberRepository : ITeamMemberRepository
     {
-        private readonly TaskFlowDbContext _context;
+        private readonly TaskFlowDbContext _context; 
 
         public TeamMemberRepository(TaskFlowDbContext context)
         {
@@ -75,10 +75,28 @@ namespace TaskFlow.Infrastructure.Repositories
                     !x.IsDeleted);
         }
 
-        public async Task<TeamMember?> GetByUserIdAndTeamIdAsync(int userId,int teamId)
+        public async Task<TeamMember?> GetByUserIdAndTeamIdAsync(int userId, int teamId)
         {
             return await _context.TeamMembers
                 .FirstOrDefaultAsync(x => x.UserId == userId && x.TeamId == teamId && !x.IsDeleted);
         }
+        public async Task<Team?> GetTeamWithCompanyAsync(int teamId)
+        {
+            return await _context.Teams
+                .Include(t => t.Company)
+                .FirstOrDefaultAsync(t =>
+                    t.Id == teamId &&
+                    !t.IsDeleted);
+        }
+
+        public async Task<User?> GetUserAsync(int userId)
+        {
+            return await _context.Users
+                .FirstOrDefaultAsync(u =>
+                    u.Id == userId &&
+                    !u.IsDeleted &&
+                    u.IsActive);
+        }
+
     }
 }

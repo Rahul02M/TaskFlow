@@ -24,18 +24,56 @@ namespace TaskFlow.Application.Services
             _currentUserService = currentUserService;
         }
 
+        //public async Task<List<TaskItemDto>> GetAllAsync()
+        //{
+        //    var tasks = await _taskItemRepository.GetAllByUserIdAsync(
+        //        _currentUserService.UserId);
+
+        //    return tasks.Select(MapToDto).ToList();
+        //}
         public async Task<List<TaskItemDto>> GetAllAsync()
         {
-            var tasks = await _taskItemRepository.GetAllByUserIdAsync(
-                _currentUserService.UserId);
+            var user = await _teamMemberRepository
+                .GetUserAsync(_currentUserService.UserId);
+
+            if (user == null)
+                return new List<TaskItemDto>();
+
+            var tasks = await _taskItemRepository.GetAllForUserAsync(
+                user.Id,
+                user.SystemRole,
+                user.CompanyId);
 
             return tasks.Select(MapToDto).ToList();
         }
+        //public async Task<TaskItemDto?> GetByIdAsync(int id)
+        //{
+        //    var task = await _taskItemRepository.GetByIdForUserAsync(
+        //        id,
+        //        _currentUserService.UserId);
+
+        //    if (task == null)
+        //        return null;
+
+        //    return MapToDto(task);
+        //}
+
+    
+
+     
         public async Task<TaskItemDto?> GetByIdAsync(int id)
         {
+            var user = await _teamMemberRepository
+                .GetUserAsync(_currentUserService.UserId);
+
+            if (user == null)
+                return null;
+
             var task = await _taskItemRepository.GetByIdForUserAsync(
                 id,
-                _currentUserService.UserId);
+                user.Id,
+                user.SystemRole,
+                user.CompanyId);
 
             if (task == null)
                 return null;
@@ -192,12 +230,30 @@ namespace TaskFlow.Application.Services
             if (!teamId.HasValue)
                 return false;
 
-            var teamMember =
-                await _teamMemberRepository.GetByUserIdAndTeamIdAsync(
-                    _currentUserService.UserId,
-                    teamId.Value);
+            var team = await _teamMemberRepository
+                .GetTeamWithCompanyAsync(teamId.Value);
 
-            return teamMember != null;
+            if (team == null)
+                return false;
+
+            var user = await _teamMemberRepository
+                .GetUserAsync(_currentUserService.UserId);
+
+            if (user == null)
+                return false;
+
+            // SuperAdmin can access every project
+            if (user.SystemRole == SystemRole.SuperAdmin)
+                return true;
+
+            // Admin can access projects inside their own company
+            if (user.SystemRole == SystemRole.Admin)
+                return user.CompanyId == team.CompanyId;
+
+            // Normal User must be a member of the project team
+            return await _teamMemberRepository.ExistsAsync(
+                _currentUserService.UserId,
+                teamId.Value);
         }
 
         private TaskItemDto MapToDto(TaskItem task)

@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TaskFlow.Application.Interfaces;
 using TaskFlow.Domain.Entities;
+using TaskFlow.Domain.Enums;
 using TaskFlow.Infrastructure.Data;
 
 namespace TaskFlow.Infrastructure.Repositories
@@ -31,9 +32,12 @@ namespace TaskFlow.Infrastructure.Repositories
                 //.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
                 .FirstOrDefaultAsync(x =>x.Id == id && !x.IsDeleted && !x.Project.IsDeleted);
         }
-        public async Task<List<TaskItem>> GetAllByUserIdAsync(int userId)
+        public async Task<List<TaskItem>> GetAllForUserAsync(
+    int userId,
+    SystemRole systemRole,
+    int? companyId)
         {
-            return await _context.TaskItems
+            var query = _context.TaskItems
                 .Include(x => x.Project)
                     .ThenInclude(x => x.Team)
                         .ThenInclude(x => x!.TeamMembers)
@@ -42,26 +46,77 @@ namespace TaskFlow.Infrastructure.Repositories
                     !x.IsDeleted &&
                     !x.Project.IsDeleted &&
                     x.Project.Team != null &&
-                    x.Project.Team.TeamMembers.Any(tm =>
+                    !x.Project.Team.IsDeleted);
+
+            // SuperAdmin can access all tasks
+            if (systemRole == SystemRole.SuperAdmin)
+            {
+                return await query.ToListAsync();
+            }
+
+            // Admin can access tasks inside their own company
+            if (systemRole == SystemRole.Admin)
+            {
+                if (!companyId.HasValue)
+                    return new List<TaskItem>();
+
+                query = query.Where(x =>
+                    x.Project.Team!.CompanyId == companyId.Value);
+            }
+            // Normal User can access tasks from their team memberships
+            else
+            {
+                query = query.Where(x =>
+                    x.Project.Team!.TeamMembers.Any(tm =>
                         tm.UserId == userId &&
-                        !tm.IsDeleted))
-                .ToListAsync();
+                        !tm.IsDeleted));
+            }
+
+            return await query.ToListAsync();
         }
-        public async Task<TaskItem?> GetByIdForUserAsync(int id, int userId)
+        public async Task<TaskItem?> GetByIdForUserAsync(
+      int id,
+      int userId,
+      SystemRole systemRole,
+      int? companyId)
         {
-            return await _context.TaskItems
+            var query = _context.TaskItems
                 .Include(x => x.Project)
                     .ThenInclude(x => x.Team)
                         .ThenInclude(x => x!.TeamMembers)
                 .Include(x => x.AssignedUser)
-                .FirstOrDefaultAsync(x =>
+                .Where(x =>
                     x.Id == id &&
                     !x.IsDeleted &&
                     !x.Project.IsDeleted &&
                     x.Project.Team != null &&
-                    x.Project.Team.TeamMembers.Any(tm =>
+                    !x.Project.Team.IsDeleted);
+
+            // SuperAdmin can access all tasks
+            if (systemRole == SystemRole.SuperAdmin)
+            {
+                return await query.FirstOrDefaultAsync();
+            }
+
+            // Admin can access tasks inside their own company
+            if (systemRole == SystemRole.Admin)
+            {
+                if (!companyId.HasValue)
+                    return null;
+
+                query = query.Where(x =>
+                    x.Project.Team!.CompanyId == companyId.Value);
+            }
+            // Normal User can access tasks from their team memberships
+            else
+            {
+                query = query.Where(x =>
+                    x.Project.Team!.TeamMembers.Any(tm =>
                         tm.UserId == userId &&
                         !tm.IsDeleted));
+            }
+
+            return await query.FirstOrDefaultAsync();
         }
 
         public async Task AddAsync(TaskItem taskItem)
