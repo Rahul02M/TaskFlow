@@ -12,5 +12,7 @@ namespace TaskFlow.Application.Interfaces
         Task AddAsync(Team team);
         Task UpdateAsync(Team team);
         Task DeleteAsync(Team team);
+        Task<List<Team>> GetAllByUserIdAsync(int userId);
+        Task<Team?> GetByIdForUserAsync(int id, int userId);
     }
 }
