@@ -7,7 +7,8 @@ namespace TaskFlow.Application.Interfaces
         Task<List<TeamMember>> GetAllAsync();
 
         Task<TeamMember?> GetByIdAsync(int id);
-
+        Task<List<TeamMember>> GetAllByUserIdAsync(int userId);
+        Task<TeamMember?> GetByIdForUserAsync(int id, int userId);
         Task AddAsync(TeamMember teamMember);
 
         Task UpdateAsync(TeamMember teamMember);

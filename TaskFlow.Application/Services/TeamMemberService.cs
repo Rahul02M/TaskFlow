@@ -1,21 +1,27 @@
-﻿using TaskFlow.Application.Interfaces;
+﻿using TaskFlow.Application.DTOs.TeamMembers;
+using TaskFlow.Application.Exceptions;
+using TaskFlow.Application.Interfaces;
 using TaskFlow.Domain.Entities;
-using TaskFlow.Application.DTOs.TeamMembers;
 
 namespace TaskFlow.Application.Services
 {
     public class TeamMemberService : ITeamMemberService
     {
         private readonly ITeamMemberRepository _teamMemberRepository;
-
-        public TeamMemberService(ITeamMemberRepository teamMemberRepository)
+        private readonly IUserRepository _userRepository;
+        private readonly ICurrentUserService _currentUserService;
+        public TeamMemberService(ITeamMemberRepository teamMemberRepository,IUserRepository userRepository,ICurrentUserService currentUserService)
         {
             _teamMemberRepository = teamMemberRepository;
+            _userRepository = userRepository;
+            _currentUserService = currentUserService;
         }
 
         public async Task<List<TeamMemberDto>> GetAllAsync()
         {
-            var teamMembers = await _teamMemberRepository.GetAllAsync();
+            var teamMembers =
+                await _teamMemberRepository.GetAllByUserIdAsync(
+                    _currentUserService.UserId);
 
             return teamMembers.Select(x => new TeamMemberDto
             {
@@ -29,7 +35,7 @@ namespace TaskFlow.Application.Services
         }
         public async Task<TeamMemberDto?> GetByIdAsync(int id)
         {
-            var teamMember = await _teamMemberRepository.GetByIdAsync(id);
+            var teamMember = await _teamMemberRepository.GetByIdForUserAsync(id,_currentUserService.UserId);
 
             if (teamMember == null)
                 return null;
@@ -46,50 +52,107 @@ namespace TaskFlow.Application.Services
         }
         public async Task<TeamMemberDto> CreateAsync(CreateTeamMemberRequest request)
         {
-            // 1. Check user exists
-            var userExists = await _teamMemberRepository.UserExistsAsync(request.UserId);
-            if (!userExists)
-                throw new InvalidOperationException("User does not exist or is inactive.");
+            // 1. Get current logged-in user
+            var currentUser =
+                await _userRepository.GetByIdAsync(
+                    _currentUserService.UserId);
 
-            var exists = await _teamMemberRepository
-            .ExistsAsync(request.UserId, request.TeamId);
+            if (currentUser == null)
+            {
+                throw new UnauthorizedException(
+                    "Current user was not found.");
+            }
 
+            // 2. Only Admin and SuperAdmin can manage TeamMembers
+            if (currentUser.SystemRole != Domain.Enums.SystemRole.Admin &&
+                currentUser.SystemRole != Domain.Enums.SystemRole.SuperAdmin)
+            {
+                throw new ForbiddenException(
+                    "You do not have permission to manage team members.");
+            }
 
-            // 2. Check team exists
-            var teamExists = await _teamMemberRepository.TeamExistsAsync(request.TeamId);
+            // 3. Get target user
+            var targetUser =
+                await _teamMemberRepository.GetUserAsync(
+                    request.UserId);
 
-            if (!teamExists)
-                throw new InvalidOperationException("Team does not exist.");
+            if (targetUser == null)
+            {
+                throw new NotFoundException(
+                    $"User with ID {request.UserId} was not found.");
+            }
 
-            // 3. Check duplicate membership
+            // 4. Get target team
+            var team =
+                await _teamMemberRepository.GetTeamWithCompanyAsync(
+                    request.TeamId);
+
+            if (team == null)
+            {
+                throw new NotFoundException(
+                    $"Team with ID {request.TeamId} was not found.");
+            }
+
+            // 5. Admin can manage only teams in their own company
+            if (currentUser.SystemRole == Domain.Enums.SystemRole.Admin)
+            {
+                if (currentUser.CompanyId != team.CompanyId)
+                {
+                    throw new ForbiddenException(
+                        "You do not have access to this team.");
+                }
+
+                if (targetUser.CompanyId != team.CompanyId)
+                {
+                    throw new ForbiddenException(
+                        "You cannot add a user from another company to this team.");
+                }
+            }
+
+            // 6. User and Team must belong to the same company
+            if (targetUser.CompanyId != team.CompanyId)
+            {
+                throw new ConflictException(
+                    "User and team must belong to the same company.");
+            }
+
+            // 7. Check duplicate membership
             var alreadyExists =
                 await _teamMemberRepository.ExistsAsync(
                     request.UserId,
                     request.TeamId);
 
             if (alreadyExists)
-                throw new InvalidOperationException( "User is already a member of this team.");
+            {
+                throw new ConflictException(
+                    "User is already a member of this team.");
+            }
 
-            // 4. Create entity
+            // 8. Create TeamMember
             var teamMember = new TeamMember
             {
                 UserId = request.UserId,
                 TeamId = request.TeamId,
-                TeamRole = (TaskFlow.Domain.Enums.TeamRole)request.TeamRole,
+                TeamRole =
+                    (TaskFlow.Domain.Enums.TeamRole)request.TeamRole,
                 IsDeleted = false
             };
-            // 5. Save
+
+            // 9. Save
             await _teamMemberRepository.AddAsync(teamMember);
 
-            // 6. Get created record with User + Team
+            // 10. Get created record with User + Team
             var createdTeamMember =
-                await _teamMemberRepository.GetByIdAsync(teamMember.Id);
+                await _teamMemberRepository.GetByIdAsync(
+                    teamMember.Id);
 
             if (createdTeamMember == null)
+            {
                 throw new Exception(
                     "Created team member could not be found.");
+            }
 
-            // 7. Return DTO
+            // 11. Return DTO
             return new TeamMemberDto
             {
                 Id = createdTeamMember.Id,
@@ -100,29 +163,82 @@ namespace TaskFlow.Application.Services
                 TeamRole = (int)createdTeamMember.TeamRole
             };
         }
-
-
-        public async Task<bool> UpdateAsync( int id, UpdateTeamMemberRequest request)
+        public async Task<bool> UpdateAsync(int id,UpdateTeamMemberRequest request)
         {
-            var existingTeamMember = await _teamMemberRepository.GetByIdAsync(id);
+            // 1. Get current logged-in user
+            var currentUser =
+                await _userRepository.GetByIdAsync(
+                    _currentUserService.UserId);
+
+            if (currentUser == null)
+            {
+                throw new UnauthorizedException(
+                    "Current user was not found.");
+            }
+
+            // 2. Only Admin and SuperAdmin can update TeamMembers
+            if (currentUser.SystemRole != Domain.Enums.SystemRole.Admin &&
+                currentUser.SystemRole != Domain.Enums.SystemRole.SuperAdmin)
+            {
+                throw new ForbiddenException(
+                    "You do not have permission to manage team members.");
+            }
+
+            // 3. Get TeamMember within current user's scope
+            var existingTeamMember =
+                await _teamMemberRepository.GetByIdForUserAsync(
+                    id,
+                    _currentUserService.UserId);
 
             if (existingTeamMember == null)
-                return false;
+            {
+                throw new NotFoundException(
+                    $"TeamMember with ID {id} was not found.");
+            }
 
-            existingTeamMember.TeamRole = (TaskFlow.Domain.Enums.TeamRole)request.TeamRole;
+            // 4. Update TeamRole
+            existingTeamMember.TeamRole =
+                (TaskFlow.Domain.Enums.TeamRole)request.TeamRole;
 
-            await _teamMemberRepository.UpdateAsync(existingTeamMember);
+            await _teamMemberRepository.UpdateAsync(
+                existingTeamMember);
 
             return true;
         }
-
         public async Task<bool> DeleteAsync(int id)
         {
-            var teamMember = await _teamMemberRepository.GetByIdAsync(id);
+            // 1. Get current logged-in user
+            var currentUser =
+                await _userRepository.GetByIdAsync(
+                    _currentUserService.UserId);
+
+            if (currentUser == null)
+            {
+                throw new UnauthorizedException(
+                    "Current user was not found.");
+            }
+
+            // 2. Only Admin and SuperAdmin can delete TeamMembers
+            if (currentUser.SystemRole != Domain.Enums.SystemRole.Admin &&
+                currentUser.SystemRole != Domain.Enums.SystemRole.SuperAdmin)
+            {
+                throw new ForbiddenException(
+                    "You do not have permission to manage team members.");
+            }
+
+            // 3. Get TeamMember within current user's scope
+            var teamMember =
+                await _teamMemberRepository.GetByIdForUserAsync(
+                    id,
+                    _currentUserService.UserId);
 
             if (teamMember == null)
-                return false;
+            {
+                throw new NotFoundException(
+                    $"TeamMember with ID {id} was not found.");
+            }
 
+            // 4. Soft delete
             await _teamMemberRepository.DeleteAsync(teamMember);
 
             return true;

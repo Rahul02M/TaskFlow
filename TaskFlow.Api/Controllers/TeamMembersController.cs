@@ -38,21 +38,12 @@ namespace TaskFlow.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create( CreateTeamMemberRequest request)
+        public async Task<IActionResult> Create(CreateTeamMemberRequest request)
         {
-            try
-            {
-                var createdTeamMember = await _teamMemberService.CreateAsync(request);
+            var createdTeamMember =
+                await _teamMemberService.CreateAsync(request);
 
-                return Ok(createdTeamMember);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Conflict(new
-                {
-                    message = ex.Message
-                });
-            }
+            return Ok(createdTeamMember);
         }
 
         [HttpPut("{id}")]
