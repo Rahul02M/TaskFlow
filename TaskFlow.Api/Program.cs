@@ -9,6 +9,9 @@ using TaskFlow.Application.Interfaces;
 using TaskFlow.Application.Services;
 using TaskFlow.Infrastructure.Data;
 using TaskFlow.Infrastructure.Repositories;
+using System.Security.Claims;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -93,7 +96,33 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 
 // JWT Authentication
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+//builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+//    .AddJwtBearer(options =>
+//    {
+//        var jwtKey = builder.Configuration["Jwt:Key"];
+
+//        options.TokenValidationParameters = new TokenValidationParameters
+//        {
+//            ValidateIssuerSigningKey = true,
+//            IssuerSigningKey = new SymmetricSecurityKey(
+//                Encoding.UTF8.GetBytes(jwtKey!)),
+
+//            ValidateIssuer = true,
+//            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+
+//            ValidateAudience = true,
+//            ValidAudience = builder.Configuration["Jwt:Audience"],
+
+//            ValidateLifetime = true,
+
+//            ClockSkew = TimeSpan.Zero
+//        };
+//    });
+
+//
+// JWT Authentication
+
+  builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         var jwtKey = builder.Configuration["Jwt:Key"];
@@ -114,8 +143,37 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
             ClockSkew = TimeSpan.Zero
         };
-    });
 
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                var userRepository =
+                    context.HttpContext.RequestServices
+                        .GetRequiredService<IUserRepository>();
+
+                var userIdValue =
+                    context.Principal?
+                        .FindFirstValue(ClaimTypes.NameIdentifier);
+
+                if (!int.TryParse(userIdValue, out var userId))
+                {
+                    context.Fail("Invalid user identity.");
+                    return;
+                }
+
+                var user =
+                    await userRepository.GetByIdAsync(userId);
+
+                if (user == null ||
+                    user.IsDeleted ||
+                    !user.IsActive)
+                {
+                    context.Fail("User is inactive or deleted.");
+                }
+            }
+        };
+    });
 
 var app = builder.Build();
 

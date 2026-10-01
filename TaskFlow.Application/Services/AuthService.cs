@@ -56,12 +56,9 @@ namespace TaskFlow.Application.Services
         {
             var key = _configuration["Jwt:Key"];
 
-            var securityKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(key!));
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key!));
 
-            var credentials = new SigningCredentials(
-                securityKey,
-                SecurityAlgorithms.HmacSha256);
+            var credentials = new SigningCredentials(securityKey,SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
             {

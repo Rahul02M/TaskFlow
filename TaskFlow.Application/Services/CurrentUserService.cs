@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 using TaskFlow.Application.Interfaces;
+using TaskFlow.Domain.Enums;
 
 namespace TaskFlow.Api.Services
 {
@@ -28,7 +29,7 @@ namespace TaskFlow.Api.Services
             }
         }
 
-        public int SystemRole
+        public SystemRole SystemRole
         {
             get
             {
@@ -36,8 +37,13 @@ namespace TaskFlow.Api.Services
                     .User
                     .FindFirstValue(ClaimTypes.Role);
 
-                if (!int.TryParse(role, out var systemRole))
-                    throw new UnauthorizedAccessException("Invalid user role.");
+                if (!Enum.TryParse<SystemRole>(
+                        role,
+                        out var systemRole))
+                {
+                    throw new UnauthorizedAccessException(
+                        "Invalid user role.");
+                }
 
                 return systemRole;
             }
