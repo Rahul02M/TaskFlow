@@ -26,7 +26,43 @@ namespace TaskFlow.Infrastructure.Repositories
             return await _context.Companies
                 .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
         }
+        public async Task<Company?> GetByIdForUserAsync(int id,int userId)
+        {
+            var user = await _context.Users
+                .Where(u =>
+                    u.Id == userId &&
+                    !u.IsDeleted &&
+                    u.IsActive)
+                .Select(u => new
+                {
+                    u.CompanyId,
+                    u.SystemRole
+                })
+                .FirstOrDefaultAsync();
 
+            if (user == null)
+                return null;
+
+            if (user.SystemRole == Domain.Enums.SystemRole.SuperAdmin)
+            {
+                return await _context.Companies
+                    .FirstOrDefaultAsync(c =>
+                        c.Id == id &&
+                        !c.IsDeleted);
+            }
+
+            if (user.SystemRole == Domain.Enums.SystemRole.Admin)
+            {
+                return await _context.Companies
+                    .FirstOrDefaultAsync(c =>
+                        c.Id == id &&
+                        !c.IsDeleted &&
+                        c.Id == user.CompanyId);
+            }
+
+            return null;
+        }
+        
         public async Task<Company?> GetByNameAsync(string name)
         {
             return await _context.Companies
