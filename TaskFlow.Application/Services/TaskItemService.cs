@@ -10,27 +10,19 @@ namespace TaskFlow.Application.Services
     {
         private readonly ITaskItemRepository _taskItemRepository;
         private readonly IProjectRepository _projectRepository;
-        private readonly IUserRepository _userRepository;
+      
         private readonly ITeamMemberRepository _teamMemberRepository;
         private readonly ICurrentUserService _currentUserService;
 
-        public TaskItemService(ITaskItemRepository taskItemRepository, IProjectRepository projectRepository, IUserRepository userRepository, ITeamMemberRepository teamMemberRepository,
+        public TaskItemService(ITaskItemRepository taskItemRepository, IProjectRepository projectRepository, ITeamMemberRepository teamMemberRepository,
         ICurrentUserService currentUserService)
         {
             _taskItemRepository = taskItemRepository;
             _projectRepository = projectRepository;
-            _userRepository = userRepository;
             _teamMemberRepository = teamMemberRepository;
             _currentUserService = currentUserService;
         }
 
-        //public async Task<List<TaskItemDto>> GetAllAsync()
-        //{
-        //    var tasks = await _taskItemRepository.GetAllByUserIdAsync(
-        //        _currentUserService.UserId);
-
-        //    return tasks.Select(MapToDto).ToList();
-        //}
         public async Task<List<TaskItemDto>> GetAllAsync()
         {
             var user = await _teamMemberRepository
@@ -46,21 +38,6 @@ namespace TaskFlow.Application.Services
 
             return tasks.Select(MapToDto).ToList();
         }
-        //public async Task<TaskItemDto?> GetByIdAsync(int id)
-        //{
-        //    var task = await _taskItemRepository.GetByIdForUserAsync(
-        //        id,
-        //        _currentUserService.UserId);
-
-        //    if (task == null)
-        //        return null;
-
-        //    return MapToDto(task);
-        //}
-
-    
-
-     
         public async Task<TaskItemDto?> GetByIdAsync(int id)
         {
             var user = await _teamMemberRepository
@@ -80,7 +57,6 @@ namespace TaskFlow.Application.Services
 
             return MapToDto(task);
         }
-
         public async Task<TaskItemDto> CreateAsync(CreateTaskItemRequest request)
         {
             var projectExists = await _projectRepository.ExistsAsync(request.ProjectId);
@@ -98,10 +74,25 @@ namespace TaskFlow.Application.Services
             if (request.AssignedUserId.HasValue)
             {
                 var userExists =
-                    await _userRepository.ExistsAsync(request.AssignedUserId.Value);
+                    await _teamMemberRepository.UserExistsAsync(
+                        request.AssignedUserId.Value);
 
                 if (!userExists)
-                    throw new NotFoundException($"User with ID {request.AssignedUserId.Value} was not found.");
+                {
+                    throw new NotFoundException(
+                        $"User with ID {request.AssignedUserId.Value} was not found.");
+                }
+
+                var isUserInProjectTeam =
+                    await IsUserInProjectTeamAsync(
+                        request.AssignedUserId.Value,
+                        request.ProjectId);
+
+                if (!isUserInProjectTeam)
+                {
+                    throw new ForbiddenException(
+                        "Assigned user must belong to the project's team.");
+                }
             }
 
             if (!Enum.IsDefined(typeof(TaskItemStatus), request.TaskStatus))
@@ -124,7 +115,7 @@ namespace TaskFlow.Application.Services
                 TaskPriority = (TaskPriority)request.TaskPriority,
                 DueDate = request.DueDate,
                 CompletedAt = request.TaskStatus == (int)TaskItemStatus.Completed
-                ? DateTime.UtcNow: null,
+                ? DateTime.UtcNow : null,
                 CreatedAt = DateTime.UtcNow,
                 IsDeleted = false
             };
@@ -138,7 +129,6 @@ namespace TaskFlow.Application.Services
                     "Task could not be retrieved after creation.");
             return MapToDto(createdTask);
         }
-
         public async Task<bool> UpdateAsync(int id, UpdateTaskItemRequest request)
         {
             var existingTask = await _taskItemRepository.GetByIdAsync(id);
@@ -165,20 +155,33 @@ namespace TaskFlow.Application.Services
 
             if (request.AssignedUserId.HasValue)
             {
-                var userExists = await _userRepository.ExistsAsync(request.AssignedUserId.Value);
+                var userExists =
+                    await _teamMemberRepository.UserExistsAsync(
+                        request.AssignedUserId.Value);
 
                 if (!userExists)
                 {
                     throw new NotFoundException(
                         $"User with ID {request.AssignedUserId.Value} was not found.");
                 }
+
+                var isUserInProjectTeam =
+                    await IsUserInProjectTeamAsync(
+                        request.AssignedUserId.Value,
+                        request.ProjectId);
+
+                if (!isUserInProjectTeam)
+                {
+                    throw new ForbiddenException(
+                        "Assigned user must belong to the project's team.");
+                }
             }
-            if (!Enum.IsDefined(typeof(TaskItemStatus),request.TaskStatus))
+            if (!Enum.IsDefined(typeof(TaskItemStatus), request.TaskStatus))
             {
                 throw new InvalidOperationException("Invalid task status.");
             }
 
-            if (!Enum.IsDefined(typeof(TaskPriority),request.TaskPriority))
+            if (!Enum.IsDefined(typeof(TaskPriority), request.TaskPriority))
             {
                 throw new InvalidOperationException("Invalid task priority.");
             }
@@ -186,7 +189,7 @@ namespace TaskFlow.Application.Services
             existingTask.ProjectId = request.ProjectId;
             existingTask.AssignedUserId = request.AssignedUserId;
             existingTask.Title = request.Title.Trim();
-            existingTask.Description =request.Description?.Trim() ?? string.Empty;
+            existingTask.Description = request.Description?.Trim() ?? string.Empty;
 
             existingTask.TaskStatus = (TaskItemStatus)request.TaskStatus;
             existingTask.TaskPriority = (TaskPriority)request.TaskPriority;
@@ -206,7 +209,6 @@ namespace TaskFlow.Application.Services
 
             return true;
         }
-
         public async Task<bool> DeleteAsync(int id)
         {
             var taskItem = await _taskItemRepository.GetByIdAsync(id);
@@ -222,7 +224,6 @@ namespace TaskFlow.Application.Services
 
             return true;
         }
-
         private async Task<bool> HasProjectAccessAsync(int projectId)
         {
             var teamId = await _projectRepository.GetTeamIdAsync(projectId);
@@ -255,7 +256,28 @@ namespace TaskFlow.Application.Services
                 _currentUserService.UserId,
                 teamId.Value);
         }
+        private async Task<bool> IsUserInProjectTeamAsync(
+      int userId,
+      int projectId)
+        {
+            var teamId = await _projectRepository.GetTeamIdAsync(projectId);
 
+            if (!teamId.HasValue)
+                return false;
+
+            var userExists =
+                await _teamMemberRepository.UserExistsAsync(userId);
+
+            if (!userExists)
+                return false;
+
+            var teamMember =
+                await _teamMemberRepository.GetByUserIdAndTeamIdAsync(
+                    userId,
+                    teamId.Value);
+
+            return teamMember != null;
+        }
         private TaskItemDto MapToDto(TaskItem task)
         {
             return new TaskItemDto
@@ -281,6 +303,7 @@ namespace TaskFlow.Application.Services
                 UpdatedAt = task.UpdatedAt
             };
         }
-    }
 
+
+    }
 }
