@@ -7,7 +7,7 @@ namespace TaskFlow.Infrastructure.Repositories
 {
     public class TeamMemberRepository : ITeamMemberRepository
     {
-        private readonly TaskFlowDbContext _context; 
+        private readonly TaskFlowDbContext _context;
 
         public TeamMemberRepository(TaskFlowDbContext context)
         {
@@ -19,7 +19,16 @@ namespace TaskFlow.Infrastructure.Repositories
             return await _context.TeamMembers
                 .Include(x => x.User)
                 .Include(x => x.Team)
-                .Where(x => !x.IsDeleted)
+                .Where(x =>
+                    !x.IsDeleted &&
+                    x.Team != null &&
+                    !x.Team.IsDeleted &&
+                    x.User != null &&
+                    !x.User.IsDeleted &&
+                    x.User.IsActive &&
+                    _context.Companies.Any(c =>
+                        c.Id == x.Team.CompanyId &&
+                        !c.IsDeleted))
                 .ToListAsync();
         }
         public async Task<TeamMember?> GetByIdAsync(int id)
@@ -27,9 +36,19 @@ namespace TaskFlow.Infrastructure.Repositories
             return await _context.TeamMembers
                 .Include(x => x.User)
                 .Include(x => x.Team)
-                .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
+                .FirstOrDefaultAsync(x =>
+                    x.Id == id &&
+                    !x.IsDeleted &&
+                    x.Team != null &&
+                    !x.Team.IsDeleted &&
+                    x.User != null &&
+                    !x.User.IsDeleted &&
+                    x.User.IsActive &&
+                    _context.Companies.Any(c =>
+                        c.Id == x.Team.CompanyId &&
+                        !c.IsDeleted));
         }
-        public async Task<TeamMember?> GetByIdForUserAsync(int id,int userId)
+        public async Task<TeamMember?> GetByIdForUserAsync(int id, int userId)
         {
             var user = await _context.Users
                 .Where(u =>
@@ -45,7 +64,6 @@ namespace TaskFlow.Infrastructure.Repositories
 
             if (user == null)
                 return null;
-
             if (user.SystemRole == Domain.Enums.SystemRole.SuperAdmin)
             {
                 return await _context.TeamMembers
@@ -55,6 +73,9 @@ namespace TaskFlow.Infrastructure.Repositories
                         x.Id == id &&
                         !x.IsDeleted &&
                         !x.Team!.IsDeleted &&
+                        _context.Companies.Any(c =>
+                            c.Id == x.Team.CompanyId &&
+                            !c.IsDeleted) &&
                         !x.User!.IsDeleted &&
                         x.User.IsActive);
             }
@@ -68,6 +89,9 @@ namespace TaskFlow.Infrastructure.Repositories
                         x.Id == id &&
                         !x.IsDeleted &&
                         !x.Team!.IsDeleted &&
+                        _context.Companies.Any(c =>
+                            c.Id == x.Team.CompanyId &&
+                            !c.IsDeleted) &&
                         !x.User!.IsDeleted &&
                         x.User.IsActive &&
                         x.Team.CompanyId == user.CompanyId);
@@ -91,7 +115,6 @@ namespace TaskFlow.Infrastructure.Repositories
 
             if (user == null)
                 return new List<TeamMember>();
-
             if (user.SystemRole == Domain.Enums.SystemRole.SuperAdmin)
             {
                 return await _context.TeamMembers
@@ -100,6 +123,9 @@ namespace TaskFlow.Infrastructure.Repositories
                     .Where(x =>
                         !x.IsDeleted &&
                         !x.Team!.IsDeleted &&
+                        _context.Companies.Any(c =>
+                            c.Id == x.Team.CompanyId &&
+                            !c.IsDeleted) &&
                         !x.User!.IsDeleted &&
                         x.User.IsActive)
                     .ToListAsync();
@@ -113,6 +139,9 @@ namespace TaskFlow.Infrastructure.Repositories
                     .Where(x =>
                         !x.IsDeleted &&
                         !x.Team!.IsDeleted &&
+                        _context.Companies.Any(c =>
+                            c.Id == x.Team.CompanyId &&
+                            !c.IsDeleted) &&
                         !x.User!.IsDeleted &&
                         x.User.IsActive &&
                         x.Team.CompanyId == user.CompanyId)
@@ -144,7 +173,15 @@ namespace TaskFlow.Infrastructure.Repositories
                 .AnyAsync(x =>
                     x.UserId == userId &&
                     x.TeamId == teamId &&
-                    !x.IsDeleted);
+                    !x.IsDeleted &&
+                    x.User != null &&
+                    !x.User.IsDeleted &&
+                    x.User.IsActive &&
+                    x.Team != null &&
+                    !x.Team.IsDeleted &&
+                    _context.Companies.Any(c =>
+                        c.Id == x.Team.CompanyId &&
+                        !c.IsDeleted));
         }
         public async Task<bool> UserExistsAsync(int userId)
         {
@@ -159,12 +196,28 @@ namespace TaskFlow.Infrastructure.Repositories
             return await _context.Teams
                 .AnyAsync(x =>
                     x.Id == teamId &&
-                    !x.IsDeleted);
+                    !x.IsDeleted &&
+                    _context.Companies.Any(c =>
+                        c.Id == x.CompanyId &&
+                        !c.IsDeleted));
         }
-        public async Task<TeamMember?> GetByUserIdAndTeamIdAsync(int userId, int teamId)
+        public async Task<TeamMember?> GetByUserIdAndTeamIdAsync(
+    int userId,
+    int teamId)
         {
             return await _context.TeamMembers
-                .FirstOrDefaultAsync(x => x.UserId == userId && x.TeamId == teamId && !x.IsDeleted);
+                .FirstOrDefaultAsync(x =>
+                    x.UserId == userId &&
+                    x.TeamId == teamId &&
+                    !x.IsDeleted &&
+                    x.User != null &&
+                    !x.User.IsDeleted &&
+                    x.User.IsActive &&
+                    x.Team != null &&
+                    !x.Team.IsDeleted &&
+                    _context.Companies.Any(c =>
+                        c.Id == x.Team.CompanyId &&
+                        !c.IsDeleted));
         }
         public async Task<Team?> GetTeamWithCompanyAsync(int teamId)
         {
@@ -172,7 +225,9 @@ namespace TaskFlow.Infrastructure.Repositories
                 .Include(t => t.Company)
                 .FirstOrDefaultAsync(t =>
                     t.Id == teamId &&
-                    !t.IsDeleted);
+                    !t.IsDeleted &&
+                    t.Company != null &&
+                    !t.Company.IsDeleted);
         }
         public async Task<User?> GetUserAsync(int userId)
         {
