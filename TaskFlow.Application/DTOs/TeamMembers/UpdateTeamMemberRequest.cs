@@ -7,7 +7,7 @@ namespace TaskFlow.Application.DTOs.TeamMembers
 {
     public  class UpdateTeamMemberRequest
     {
-        [Required]
+        [Range(0, 1)]
         public int TeamRole { get; set; }
     }
 }

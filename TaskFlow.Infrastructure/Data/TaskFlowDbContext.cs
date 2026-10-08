@@ -55,8 +55,9 @@ namespace TaskFlow.Infrastructure.Data
                 .OnDelete(DeleteBehavior.Restrict);
             //constraint
             modelBuilder.Entity<TeamMember>()
-                .HasIndex(tm => new { tm.UserId, tm.TeamId })
-                .IsUnique();
+                 .HasIndex(tm => new { tm.UserId, tm.TeamId })
+                 .IsUnique()
+                 .HasFilter("[IsDeleted] = 0");
 
             modelBuilder.Entity<Project>()
                 .HasOne(p => p.Team)

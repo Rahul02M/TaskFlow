@@ -59,7 +59,7 @@ namespace TaskFlow.Api.Controllers
             return NoContent();
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

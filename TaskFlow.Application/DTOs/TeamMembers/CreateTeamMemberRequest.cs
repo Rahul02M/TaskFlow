@@ -7,13 +7,13 @@ namespace TaskFlow.Application.DTOs.TeamMembers
 {
     public class CreateTeamMemberRequest
     {
-        [Required]
+        [Range(1, int.MaxValue)]
         public int UserId { get; set; }
 
-        [Required]
+        [Range(1, int.MaxValue)]
         public int TeamId { get; set; }
 
-        [Required]
+        [Range(0, 1)]
         public int TeamRole { get; set; }
     }
 }
