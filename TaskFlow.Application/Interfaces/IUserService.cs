@@ -11,9 +11,9 @@ namespace TaskFlow.Application.Interfaces
 
         //Task<User> CreateAsync(User user);
         //Task<UserDto> CreateAsync(CreateUserRequest request);
-        Task<UserDto> CreateAsync(CreateUserRequest request,string currentUserRole);
-        Task<bool> UpdateAsync(int id, UpdateUserRequest request);
-        Task<bool> DeleteAsync(int id);
+        Task<UserDto> CreateAsync(CreateUserRequest request, int currentUserId);
+        Task<bool> UpdateAsync(int id, UpdateUserRequest request, int currentUserId);
+        Task<bool> DeleteAsync(int id, int currentUserId);
 
     }
 }

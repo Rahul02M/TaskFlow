@@ -165,10 +165,21 @@ namespace TaskFlow.Application.Services
             await _teamRepository.UpdateAsync(existingTeam);
         }
 
+
         public async Task DeleteAsync(int id)
         {
-            var team =
-                await _teamRepository.GetByIdAsync(id);
+            // 1. Get the current user
+            var currentUser = await _userRepository.GetByIdAsync(
+                _currentUserService.UserId);
+
+            if (currentUser == null)
+            {
+                throw new UnauthorizedException(
+                    "Current user was not found.");
+            }
+
+            // 2. Get the team
+            var team = await _teamRepository.GetByIdAsync(id);
 
             if (team == null)
             {
@@ -176,6 +187,15 @@ namespace TaskFlow.Application.Services
                     $"Team with ID {id} was not found.");
             }
 
+            // 3. Admin can delete teams only in their own company
+            if (currentUser.SystemRole == Domain.Enums.SystemRole.Admin &&
+                currentUser.CompanyId != team.CompanyId)
+            {
+                throw new ForbiddenException(
+                    "You do not have access to this team.");
+            }
+
+            // 4. Delete the team only after authorization succeeds
             await _teamRepository.DeleteAsync(team);
         }
     }

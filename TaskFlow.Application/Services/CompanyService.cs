@@ -159,11 +159,11 @@ namespace TaskFlow.Application.Services
             };
         }
 
-        public async Task UpdateAsync(int id,UpdateCompanyRequest request)
+     
+    public async Task UpdateAsync(int id, UpdateCompanyRequest request)
         {
-            // 1. Get current logged-in user
-            var currentUser =await _userRepository.GetByIdAsync(
-                    _currentUserService.UserId);
+            var currentUser = await _userRepository.GetByIdAsync(
+                _currentUserService.UserId);
 
             if (currentUser == null)
             {
@@ -171,7 +171,6 @@ namespace TaskFlow.Application.Services
                     "Current user was not found.");
             }
 
-            // 2. Only Admin and SuperAdmin can update companies
             if (currentUser.SystemRole != Domain.Enums.SystemRole.Admin &&
                 currentUser.SystemRole != Domain.Enums.SystemRole.SuperAdmin)
             {
@@ -179,29 +178,35 @@ namespace TaskFlow.Application.Services
                     "You do not have permission to update companies.");
             }
 
-            // 3. Get company within current user's allowed scope
-            var existingCompany = await _companyRepository.GetByIdForUserAsync(id,_currentUserService.UserId);
+            var existingCompany =
+                await _companyRepository.GetByIdForUserAsync(
+                    id,
+                    _currentUserService.UserId);
 
             if (existingCompany == null)
             {
-                throw new NotFoundException($"Company with ID {id} was not found.");
+                throw new NotFoundException(
+                    $"Company with ID {id} was not found.");
             }
 
-            // 4. Check duplicate company name
-            var duplicateCompany = await _companyRepository.GetByNameAsync(request.Name);
+            var normalizedName = request.Name.Trim();
+
+            var duplicateCompany =
+                await _companyRepository.GetByNameAsync(normalizedName);
 
             if (duplicateCompany != null && duplicateCompany.Id != id)
             {
-                throw new ConflictException("Company name is already registered.");
+                throw new ConflictException(
+                    "Company name is already registered.");
             }
 
-            // 5. Update
-            existingCompany.Name = request.Name.Trim();
+            existingCompany.Name = normalizedName;
             existingCompany.UpdatedAt = DateTime.UtcNow;
 
-            // 6. Save
             await _companyRepository.UpdateAsync(existingCompany);
         }
+
+
 
         public async Task DeleteAsync(int id)
         {

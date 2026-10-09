@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using TaskFlow.Application.DTOs.Users;
 using TaskFlow.Application.Interfaces;
+using System.Security.Claims;
 
 namespace TaskFlow.Api.Controllers
 {
@@ -51,32 +52,43 @@ namespace TaskFlow.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(CreateUserRequest request)
         {
-            var currentUserRole = User.FindFirst(
-                System.Security.Claims.ClaimTypes.Role)?.Value;
+            var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            var createdUser = await _userService.CreateAsync(
-                request,
-                currentUserRole!);
+            if (!int.TryParse(userIdValue, out var currentUserId))
+                return Unauthorized();
+
+            var createdUser = await _userService.CreateAsync(request, currentUserId);
 
             return Ok(createdUser);
         }
 
-
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, UpdateUserRequest request)
         {
-             await _userService.UpdateAsync(id, request);
+            var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!int.TryParse(userIdValue, out var currentUserId))
+                return Unauthorized();
+
+            var result = await _userService.UpdateAsync(id, request, currentUserId);
+
+            if (!result)
+                return NotFound();
 
             return NoContent();
         }
-
-
+        
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-             await _userService.DeleteAsync(id);
-           
-             return NoContent();
+            var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!int.TryParse(userIdValue, out var currentUserId))
+                return Unauthorized();
+
+            await _userService.DeleteAsync(id, currentUserId);
+
+            return NoContent();
         }
     }
 }
