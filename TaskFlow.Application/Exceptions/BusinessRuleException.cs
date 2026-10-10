@@ -1,10 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
+﻿
 namespace TaskFlow.Application.Exceptions
 {
-    public  class BusinessRuleException
+    public class BadRequestException : Exception
     {
+        public BadRequestException(string message)
+            : base(message)
+        {
+        }
     }
 }

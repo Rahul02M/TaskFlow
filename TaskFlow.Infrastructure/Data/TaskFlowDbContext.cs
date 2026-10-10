@@ -41,6 +41,11 @@ namespace TaskFlow.Infrastructure.Data
                  .WithMany(c => c.Users)
                  .HasForeignKey(u => u.CompanyId)
                  .OnDelete(DeleteBehavior.Restrict);
+            
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0");
 
             modelBuilder.Entity<TeamMember>()
                 .HasOne(tm => tm.User)

@@ -21,7 +21,12 @@ namespace TaskFlow.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var users = await _userService.GetAllAsync();
+            var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!int.TryParse(userIdValue, out var currentUserId))
+                return Unauthorized();
+
+            var users = await _userService.GetAllAsync(currentUserId);
 
             return Ok(users);
         }
@@ -29,7 +34,12 @@ namespace TaskFlow.Api.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var user = await _userService.GetByIdAsync(id);
+            var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!int.TryParse(userIdValue, out var currentUserId))
+                return Unauthorized();
+
+            var user = await _userService.GetByIdAsync(id, currentUserId);
 
             if (user == null)
                 return NotFound();

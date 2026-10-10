@@ -9,18 +9,45 @@ namespace TaskFlow.Application.Services
 {
     public class UserService : IUserService
     {
+        private readonly ICompanyRepository _companyRepository;
         private readonly IUserRepository _userRepository;
         private readonly PasswordHasher<User> _passwordHasher;
 
-        public UserService(IUserRepository userRepository)
+        public UserService(IUserRepository userRepository, ICompanyRepository companyRepository)
         {
             _userRepository = userRepository;
+            _companyRepository = companyRepository;
             _passwordHasher = new PasswordHasher<User>();
         }
 
-        public async Task<List<UserDto>> GetAllAsync()
+        public async Task<List<UserDto>> GetAllAsync(int currentUserId)
         {
-            var users = await _userRepository.GetAllAsync();
+            var currentUser = await _userRepository.GetByIdAsync(currentUserId);
+
+            if (currentUser == null || !currentUser.IsActive)
+                throw new UnauthorizedException(
+                    "Current user was not found or is inactive.");
+
+            List<User> users;
+
+            if (currentUser.SystemRole == SystemRole.SuperAdmin)
+            {
+                users = await _userRepository.GetAllAsync();
+            }
+            else if (currentUser.SystemRole == SystemRole.Admin)
+            {
+                if (currentUser.CompanyId == null)
+                    throw new ForbiddenException(
+                        "Your account is not assigned to a company.");
+
+                users = await _userRepository.GetAllByCompanyIdAsync(
+                    currentUser.CompanyId);
+            }
+            else
+            {
+                throw new ForbiddenException(
+                    "You do not have permission to view users.");
+            }
 
             return users.Select(user => new UserDto
             {
@@ -33,9 +60,38 @@ namespace TaskFlow.Application.Services
                 IsActive = user.IsActive
             }).ToList();
         }
-        public async Task<UserDto?> GetByIdAsync(int id)
+        public async Task<UserDto?> GetByIdAsync(int id, int currentUserId)
         {
-            var user = await _userRepository.GetByIdAsync(id);
+            var currentUser = await _userRepository.GetByIdAsync(currentUserId);
+
+            if (currentUser == null || !currentUser.IsActive)
+                throw new UnauthorizedException(
+                    "Current user was not found or is inactive.");
+
+            User? user;
+
+            if (currentUser.SystemRole == SystemRole.SuperAdmin)
+            {
+                user = await _userRepository.GetByIdAsync(id);
+            }
+            else if (currentUser.SystemRole == SystemRole.Admin)
+            {
+                if (currentUser.CompanyId == null)
+                    throw new ForbiddenException(
+                        "Your account is not assigned to a company.");
+
+                user = await _userRepository.GetByIdAndCompanyIdAsync(
+                    id, currentUser.CompanyId);
+
+                if (user == null)
+                    throw new NotFoundException(
+                        $"User with ID {id} was not found.");
+            }
+            else
+            {
+                throw new ForbiddenException(
+                    "You do not have permission to view users.");
+            }
 
             if (user == null)
                 return null;
@@ -51,19 +107,18 @@ namespace TaskFlow.Application.Services
                 IsActive = user.IsActive
             };
         }
-        public async Task<UserDto> CreateAsync(
-     CreateUserRequest request,
-     int currentUserId)
+        public async Task<UserDto> CreateAsync(CreateUserRequest request,int currentUserId)
         {
             var currentUser = await _userRepository.GetByIdAsync(currentUserId);
 
             if (currentUser == null || !currentUser.IsActive)
                 throw new UnauthorizedException("Current user was not found or is inactive.");
+            if (!Enum.IsDefined(typeof(SystemRole), request.SystemRole))
+            {
+                throw new BadRequestException("Invalid system role.");
+            }
 
             var requestedRole = (SystemRole)request.SystemRole;
-
-            if (!Enum.IsDefined(typeof(SystemRole), request.SystemRole))
-                throw new InvalidOperationException("Invalid system role.");
 
             if (currentUser.SystemRole != SystemRole.Admin &&
                 currentUser.SystemRole != SystemRole.SuperAdmin)
@@ -79,7 +134,7 @@ namespace TaskFlow.Application.Services
                         "Your account is not assigned to a company.");
 
                 if (request.CompanyId.HasValue &&
-                    request.CompanyId.Value != currentUser.CompanyId.Value)
+                    request.CompanyId.Value != currentUser.CompanyId)
                 {
                     throw new ForbiddenException(
                         "You cannot create users in another company.");
@@ -99,11 +154,31 @@ namespace TaskFlow.Application.Services
                     "SuperAdmin cannot create another SuperAdmin.");
             }
 
-            var companyIdToAssign =
-                currentUser.SystemRole == SystemRole.Admin
-                    ? currentUser.CompanyId
-                    : request.CompanyId;
+            int companyIdToAssign;
 
+            if (currentUser.SystemRole == SystemRole.Admin)
+            {
+                companyIdToAssign = currentUser.CompanyId;
+            }
+            else
+            {
+                if (!request.CompanyId.HasValue)
+                {
+                    throw new BadRequestException(
+                        "CompanyId is required when creating a user.");
+                }
+
+                companyIdToAssign = request.CompanyId.Value;
+            }
+
+            var company = await _companyRepository
+                .GetByIdAsync(companyIdToAssign);
+
+            if (company == null)
+            {
+                throw new NotFoundException(
+                    $"Company with ID {companyIdToAssign} was not found.");
+            }
             var existingUser = await _userRepository.GetByEmailAsync(request.Email);
 
             if (existingUser != null)
@@ -135,10 +210,7 @@ namespace TaskFlow.Application.Services
                 IsActive = user.IsActive
             };
         }
-        public async Task<bool> UpdateAsync(
-     int id,
-     UpdateUserRequest request,
-     int currentUserId)
+        public async Task<bool> UpdateAsync(int id,UpdateUserRequest request,int currentUserId)
         {
             var currentUser = await _userRepository.GetByIdAsync(currentUserId);
 
@@ -180,7 +252,7 @@ namespace TaskFlow.Application.Services
                 }
 
                 if (request.CompanyId.HasValue &&
-                    request.CompanyId.Value != currentUser.CompanyId.Value)
+                    request.CompanyId.Value != currentUser.CompanyId)
                 {
                     throw new ForbiddenException(
                         "You cannot move a user to another company.");
@@ -189,19 +261,30 @@ namespace TaskFlow.Application.Services
 
             // Validate the requested role before casting it.
             if (!Enum.IsDefined(typeof(SystemRole), request.SystemRole))
-                throw new InvalidOperationException("Invalid system role.");
-
+            {
+                throw new BadRequestException("Invalid system role.");
+            }
             var requestedRole = (SystemRole)request.SystemRole;
 
-            // Do not allow creation of another SuperAdmin through an update.
+            // SuperAdmins cannot change another SuperAdmin's role.
             if (currentUser.SystemRole == SystemRole.SuperAdmin &&
+                user.SystemRole == SystemRole.SuperAdmin &&
+                currentUser.Id != user.Id &&
+                requestedRole != SystemRole.SuperAdmin)
+            {
+                throw new ForbiddenException(
+                    "You cannot change another SuperAdmin's role.");
+            }
+
+            // Prevent promoting another user to SuperAdmin.
+            if (currentUser.SystemRole == SystemRole.SuperAdmin &&
+                currentUser.Id != user.Id &&
                 requestedRole == SystemRole.SuperAdmin &&
                 user.SystemRole != SystemRole.SuperAdmin)
             {
                 throw new ForbiddenException(
                     "You cannot promote another user to SuperAdmin.");
             }
-
             // Avoid duplicate email addresses.
             var existingUser = await _userRepository.GetByEmailAsync(request.Email);
 
@@ -216,12 +299,21 @@ namespace TaskFlow.Application.Services
 
             // Admins cannot change company assignment.
             // SuperAdmins may change it when a CompanyId is supplied.
+
             if (currentUser.SystemRole == SystemRole.SuperAdmin &&
                 request.CompanyId.HasValue)
             {
-                user.CompanyId = request.CompanyId.Value;
-            }
+                var company = await _companyRepository
+                    .GetByIdAsync(request.CompanyId.Value);
 
+                if (company == null)
+                {
+                    throw new NotFoundException(
+                        $"Company with ID {request.CompanyId.Value} was not found.");
+                }
+
+                user.CompanyId = company.Id;
+            }
             await _userRepository.UpdateAsync(user);
 
             return true;

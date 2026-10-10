@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 using TaskFlow.Domain.Enums;
 
@@ -8,11 +9,11 @@ namespace TaskFlow.Domain.Entities
     public class User
     {
         public int Id { get; set; }
-        public int? CompanyId { get; set; }
-        public Company? Company { get; set; }
+        public int CompanyId { get; set; }
+        public Company Company { get; set; } = null!;
 
         public string Name { get; set; } = string.Empty;
-
+        [MaxLength(450)]
         public string Email { get; set; } = string.Empty;
 
         public string PasswordHash { get; set; } = string.Empty;

@@ -5,10 +5,9 @@ namespace TaskFlow.Application.Interfaces
 {
     public interface IUserService
     {
-        Task<List<UserDto>> GetAllAsync();
-
-        Task<UserDto?> GetByIdAsync(int id);
-
+    
+        Task<List<UserDto>> GetAllAsync(int currentUserId);
+        Task<UserDto?> GetByIdAsync(int id, int currentUserId);
         //Task<User> CreateAsync(User user);
         //Task<UserDto> CreateAsync(CreateUserRequest request);
         Task<UserDto> CreateAsync(CreateUserRequest request, int currentUserId);

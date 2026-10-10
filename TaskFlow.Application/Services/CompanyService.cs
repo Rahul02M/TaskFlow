@@ -56,7 +56,7 @@ namespace TaskFlow.Application.Services
 
                 var company =
                     await _companyRepository.GetByIdForUserAsync(
-                        currentUser.CompanyId.Value,
+                        currentUser.CompanyId,
                         _currentUserService.UserId);
 
                 companies = company == null

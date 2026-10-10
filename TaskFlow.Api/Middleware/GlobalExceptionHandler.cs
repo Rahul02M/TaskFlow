@@ -28,6 +28,8 @@ public class GlobalExceptionHandler : IExceptionHandler
             NotFoundException => (int)HttpStatusCode.NotFound,
             ConflictException => (int)HttpStatusCode.Conflict,
             ForbiddenException => (int)HttpStatusCode.Forbidden,
+            UnauthorizedException => (int)HttpStatusCode.Unauthorized,
+            BadRequestException => (int)HttpStatusCode.BadRequest,
             InvalidOperationException => (int)HttpStatusCode.BadRequest,
             _ => (int)HttpStatusCode.InternalServerError
         };
