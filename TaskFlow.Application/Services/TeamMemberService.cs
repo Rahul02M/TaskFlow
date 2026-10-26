@@ -57,12 +57,17 @@ namespace TaskFlow.Application.Services
                 await _userRepository.GetByIdAsync(
                     _currentUserService.UserId);
 
-            if (currentUser == null)
+            if (currentUser == null || !currentUser.IsActive)
             {
                 throw new UnauthorizedException(
-                    "Current user was not found.");
+                    "Current user was not found or is inactive.");
             }
-
+            if (!Enum.IsDefined(
+        typeof(TaskFlow.Domain.Enums.TeamRole),
+        request.TeamRole))
+            {
+                throw new BadRequestException("Invalid team role.");
+            }
             // 2. Only Admin and SuperAdmin can manage TeamMembers
             if (currentUser.SystemRole != Domain.Enums.SystemRole.Admin &&
                 currentUser.SystemRole != Domain.Enums.SystemRole.SuperAdmin)
@@ -141,15 +146,16 @@ namespace TaskFlow.Application.Services
             // 9. Save
             await _teamMemberRepository.AddAsync(teamMember);
 
-            // 10. Get created record with User + Team
+            // 10. Get the created record within the current user's scope
             var createdTeamMember =
-                await _teamMemberRepository.GetByIdAsync(
-                    teamMember.Id);
+                await _teamMemberRepository.GetByIdForUserAsync(
+                    teamMember.Id,
+                    _currentUserService.UserId);
 
             if (createdTeamMember == null)
             {
-                throw new Exception(
-                    "Created team member could not be found.");
+                throw new InvalidOperationException(
+                    "The team member was created but could not be retrieved.");
             }
 
             // 11. Return DTO
@@ -170,10 +176,16 @@ namespace TaskFlow.Application.Services
                 await _userRepository.GetByIdAsync(
                     _currentUserService.UserId);
 
-            if (currentUser == null)
+            if (currentUser == null || !currentUser.IsActive)
             {
                 throw new UnauthorizedException(
-                    "Current user was not found.");
+                    "Current user was not found or is inactive.");
+            }
+            if (!Enum.IsDefined(
+        typeof(TaskFlow.Domain.Enums.TeamRole),
+        request.TeamRole))
+            {
+                throw new BadRequestException("Invalid team role.");
             }
 
             // 2. Only Admin and SuperAdmin can update TeamMembers
@@ -212,12 +224,11 @@ namespace TaskFlow.Application.Services
                 await _userRepository.GetByIdAsync(
                     _currentUserService.UserId);
 
-            if (currentUser == null)
+            if (currentUser == null || !currentUser.IsActive)
             {
                 throw new UnauthorizedException(
-                    "Current user was not found.");
+                    "Current user was not found or is inactive.");
             }
-
             // 2. Only Admin and SuperAdmin can delete TeamMembers
             if (currentUser.SystemRole != Domain.Enums.SystemRole.Admin &&
                 currentUser.SystemRole != Domain.Enums.SystemRole.SuperAdmin)

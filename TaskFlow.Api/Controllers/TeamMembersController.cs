@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using TaskFlow.Application.DTOs.TeamMembers;
 using TaskFlow.Application.Interfaces;
-using TaskFlow.Domain.Entities;
+
 
 namespace TaskFlow.Api.Controllers
 {
@@ -43,7 +43,8 @@ namespace TaskFlow.Api.Controllers
             var createdTeamMember =
                 await _teamMemberService.CreateAsync(request);
 
-            return Ok(createdTeamMember);
+            return CreatedAtAction(
+                nameof(GetById),new { id = createdTeamMember.Id },createdTeamMember);
         }
 
         [HttpPut("{id}")]

@@ -47,18 +47,6 @@ namespace TaskFlow.Api.Controllers
             return Ok(user);
         }
 
-        //[HttpPost]
-        //public async Task<IActionResult> Create(CreateUserRequest request)
-        //{
-        //    var createdUser = await _userService.CreateAsync(request);
-
-        //    return CreatedAtAction(
-        //        nameof(GetById),
-        //        new { id = createdUser.Id },
-        //        createdUser);
-        //}
-
-
         [HttpPost]
         public async Task<IActionResult> Create(CreateUserRequest request)
         {
@@ -69,7 +57,10 @@ namespace TaskFlow.Api.Controllers
 
             var createdUser = await _userService.CreateAsync(request, currentUserId);
 
-            return Ok(createdUser);
+            return CreatedAtAction(
+                 nameof(GetById),
+                 new { id = createdUser.Id },
+                 createdUser);
         }
 
         [HttpPut("{id}")]

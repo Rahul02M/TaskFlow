@@ -51,10 +51,11 @@ namespace TaskFlow.Infrastructure.Repositories
         public async Task<TeamMember?> GetByIdForUserAsync(int id, int userId)
         {
             var user = await _context.Users
-                .Where(u =>
-                    u.Id == userId &&
-                    !u.IsDeleted &&
-                    u.IsActive)
+               .Where(u =>u.Id == userId &&
+                !u.IsDeleted && u.IsActive &&
+                _context.Companies.Any(c =>
+                    c.Id == u.CompanyId &&
+                    !c.IsDeleted))
                 .Select(u => new
                 {
                     u.CompanyId,
@@ -64,40 +65,40 @@ namespace TaskFlow.Infrastructure.Repositories
 
             if (user == null)
                 return null;
+
+            var query = _context.TeamMembers
+                .Include(x => x.User)
+                .Include(x => x.Team)
+                .Where(x =>
+                    x.Id == id &&
+                    !x.IsDeleted &&
+                    x.Team != null &&
+                    !x.Team.IsDeleted &&
+                    x.User != null &&
+                    !x.User.IsDeleted &&
+                    x.User.IsActive &&
+                    _context.Companies.Any(c =>
+                        c.Id == x.Team.CompanyId &&
+                        !c.IsDeleted));
+
+            // SuperAdmin can view any active membership.
             if (user.SystemRole == Domain.Enums.SystemRole.SuperAdmin)
             {
-                return await _context.TeamMembers
-                    .Include(x => x.User)
-                    .Include(x => x.Team)
-                    .FirstOrDefaultAsync(x =>
-                        x.Id == id &&
-                        !x.IsDeleted &&
-                        !x.Team!.IsDeleted &&
-                        _context.Companies.Any(c =>
-                            c.Id == x.Team.CompanyId &&
-                            !c.IsDeleted) &&
-                        !x.User!.IsDeleted &&
-                        x.User.IsActive);
+                return await query.FirstOrDefaultAsync();
             }
 
+            // Admin can view memberships within their company.
             if (user.SystemRole == Domain.Enums.SystemRole.Admin)
             {
-                return await _context.TeamMembers
-                    .Include(x => x.User)
-                    .Include(x => x.Team)
-                    .FirstOrDefaultAsync(x =>
-                        x.Id == id &&
-                        !x.IsDeleted &&
-                        !x.Team!.IsDeleted &&
-                        _context.Companies.Any(c =>
-                            c.Id == x.Team.CompanyId &&
-                            !c.IsDeleted) &&
-                        !x.User!.IsDeleted &&
-                        x.User.IsActive &&
-                        x.Team.CompanyId == user.CompanyId);
+                return await query
+                    .Where(x => x.Team!.CompanyId == user.CompanyId)
+                    .FirstOrDefaultAsync();
             }
 
-            return null;
+            // Normal users can view only their own memberships.
+            return await query
+                .Where(x => x.UserId == userId)
+                .FirstOrDefaultAsync();
         }
         public async Task<List<TeamMember>> GetAllByUserIdAsync(int userId)
         {
@@ -115,41 +116,39 @@ namespace TaskFlow.Infrastructure.Repositories
 
             if (user == null)
                 return new List<TeamMember>();
+
+            var query = _context.TeamMembers
+                .Include(x => x.User)
+                .Include(x => x.Team)
+                .Where(x =>
+                    !x.IsDeleted &&
+                    x.Team != null &&
+                    !x.Team.IsDeleted &&
+                    x.User != null &&
+                    !x.User.IsDeleted &&
+                    x.User.IsActive &&
+                    _context.Companies.Any(c =>
+                        c.Id == x.Team.CompanyId &&
+                        !c.IsDeleted));
+
             if (user.SystemRole == Domain.Enums.SystemRole.SuperAdmin)
             {
-                return await _context.TeamMembers
-                    .Include(x => x.User)
-                    .Include(x => x.Team)
-                    .Where(x =>
-                        !x.IsDeleted &&
-                        !x.Team!.IsDeleted &&
-                        _context.Companies.Any(c =>
-                            c.Id == x.Team.CompanyId &&
-                            !c.IsDeleted) &&
-                        !x.User!.IsDeleted &&
-                        x.User.IsActive)
-                    .ToListAsync();
+                return await query.ToListAsync();
             }
 
             if (user.SystemRole == Domain.Enums.SystemRole.Admin)
             {
-                return await _context.TeamMembers
-                    .Include(x => x.User)
-                    .Include(x => x.Team)
-                    .Where(x =>
-                        !x.IsDeleted &&
-                        !x.Team!.IsDeleted &&
-                        _context.Companies.Any(c =>
-                            c.Id == x.Team.CompanyId &&
-                            !c.IsDeleted) &&
-                        !x.User!.IsDeleted &&
-                        x.User.IsActive &&
-                        x.Team.CompanyId == user.CompanyId)
+                return await query
+                    .Where(x => x.Team!.CompanyId == user.CompanyId)
                     .ToListAsync();
             }
 
-            return new List<TeamMember>();
+            // Normal users can see only their own team memberships.
+            return await query
+                .Where(x => x.UserId == userId)
+                .ToListAsync();
         }
+
         public async Task AddAsync(TeamMember teamMember)
         {
             await _context.TeamMembers.AddAsync(teamMember);
@@ -201,9 +200,7 @@ namespace TaskFlow.Infrastructure.Repositories
                         c.Id == x.CompanyId &&
                         !c.IsDeleted));
         }
-        public async Task<TeamMember?> GetByUserIdAndTeamIdAsync(
-    int userId,
-    int teamId)
+        public async Task<TeamMember?> GetByUserIdAndTeamIdAsync(int userId,int teamId)
         {
             return await _context.TeamMembers
                 .FirstOrDefaultAsync(x =>
