@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Text;
-
-namespace TaskFlow.Domain.Entities
+﻿namespace TaskFlow.Domain.Entities
 {
     public class Company
     {

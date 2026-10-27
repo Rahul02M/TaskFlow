@@ -51,7 +51,7 @@ namespace TaskFlow.Infrastructure.Repositories
                          c.Id == t.CompanyId &&
                          !c.IsDeleted))
                  .ToListAsync();
-             }
+            }
 
             // Admin can access teams in their own company
             if (user.SystemRole == Domain.Enums.SystemRole.Admin)
@@ -102,14 +102,14 @@ namespace TaskFlow.Infrastructure.Repositories
             // Admin can access active teams in their own company
             if (user.SystemRole == Domain.Enums.SystemRole.Admin)
             {
-                    return await _context.Teams
-                .FirstOrDefaultAsync(t =>
-                    t.Id == id &&
-                    !t.IsDeleted &&
-                    t.CompanyId == user.CompanyId &&
-                    _context.Companies.Any(c =>
-                        c.Id == t.CompanyId &&
-                        !c.IsDeleted));
+                return await _context.Teams
+            .FirstOrDefaultAsync(t =>
+                t.Id == id &&
+                !t.IsDeleted &&
+                t.CompanyId == user.CompanyId &&
+                _context.Companies.Any(c =>
+                    c.Id == t.CompanyId &&
+                    !c.IsDeleted));
             }
 
             // Normal User has no Team management access.
@@ -125,7 +125,7 @@ namespace TaskFlow.Infrastructure.Repositories
                 c.Id == t.CompanyId &&
                 !c.IsDeleted));
         }
-        public async Task<Team?> GetByNameAsync( string name, int companyId)
+        public async Task<Team?> GetByNameAsync(string name, int companyId)
         {
             return await _context.Teams
                 .FirstOrDefaultAsync(x =>

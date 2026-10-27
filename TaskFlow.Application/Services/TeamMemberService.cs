@@ -10,7 +10,7 @@ namespace TaskFlow.Application.Services
         private readonly ITeamMemberRepository _teamMemberRepository;
         private readonly IUserRepository _userRepository;
         private readonly ICurrentUserService _currentUserService;
-        public TeamMemberService(ITeamMemberRepository teamMemberRepository,IUserRepository userRepository,ICurrentUserService currentUserService)
+        public TeamMemberService(ITeamMemberRepository teamMemberRepository, IUserRepository userRepository, ICurrentUserService currentUserService)
         {
             _teamMemberRepository = teamMemberRepository;
             _userRepository = userRepository;
@@ -35,7 +35,7 @@ namespace TaskFlow.Application.Services
         }
         public async Task<TeamMemberDto?> GetByIdAsync(int id)
         {
-            var teamMember = await _teamMemberRepository.GetByIdForUserAsync(id,_currentUserService.UserId);
+            var teamMember = await _teamMemberRepository.GetByIdForUserAsync(id, _currentUserService.UserId);
 
             if (teamMember == null)
                 return null;
@@ -169,7 +169,7 @@ namespace TaskFlow.Application.Services
                 TeamRole = (int)createdTeamMember.TeamRole
             };
         }
-        public async Task<bool> UpdateAsync(int id,UpdateTeamMemberRequest request)
+        public async Task<bool> UpdateAsync(int id, UpdateTeamMemberRequest request)
         {
             // 1. Get current logged-in user
             var currentUser =

@@ -30,7 +30,7 @@ namespace TaskFlow.Infrastructure.Data
                  .WithMany(c => c.Teams)
                  .HasForeignKey(t => t.CompanyId)
                  .OnDelete(DeleteBehavior.Restrict);
-            
+
             // Constraint: Team name must be unique within a company
             modelBuilder.Entity<Team>()
                 .HasIndex(t => new { t.CompanyId, t.Name })
@@ -41,7 +41,7 @@ namespace TaskFlow.Infrastructure.Data
                  .WithMany(c => c.Users)
                  .HasForeignKey(u => u.CompanyId)
                  .OnDelete(DeleteBehavior.Restrict);
-            
+
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Email)
                 .IsUnique()

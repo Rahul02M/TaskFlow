@@ -44,7 +44,7 @@ namespace TaskFlow.Api.Controllers
                 await _teamMemberService.CreateAsync(request);
 
             return CreatedAtAction(
-                nameof(GetById),new { id = createdTeamMember.Id },createdTeamMember);
+                nameof(GetById), new { id = createdTeamMember.Id }, createdTeamMember);
         }
 
         [HttpPut("{id}")]

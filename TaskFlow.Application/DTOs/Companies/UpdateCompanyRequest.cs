@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Text;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace TaskFlow.Application.DTOs.Companies
 {
-   public  class UpdateCompanyRequest
+    public class UpdateCompanyRequest
     {
         [Required]
         [StringLength(150, MinimumLength = 2)]

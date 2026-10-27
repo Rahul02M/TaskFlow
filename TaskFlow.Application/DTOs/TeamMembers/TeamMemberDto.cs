@@ -1,6 +1,6 @@
 ﻿namespace TaskFlow.Application.DTOs.TeamMembers
 {
-    public  class TeamMemberDto
+    public class TeamMemberDto
     {
         public int Id { get; set; }
         public int UserId { get; set; }

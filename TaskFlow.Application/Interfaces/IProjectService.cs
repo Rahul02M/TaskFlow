@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using TaskFlow.Application.DTOs.Projects;
-using TaskFlow.Domain.Entities;
+﻿using TaskFlow.Application.DTOs.Projects;
 
 namespace TaskFlow.Application.Interfaces
 {
@@ -12,7 +8,7 @@ namespace TaskFlow.Application.Interfaces
         Task<ProjectDto?> GetByIdAsync(int id);
         Task<ProjectDto> CreateAsync(CreateProjectRequest request);
         Task<bool> UpdateAsync(int id, UpdateProjectRequest request);
-        Task<bool> DeleteAsync( int id);
+        Task<bool> DeleteAsync(int id);
 
 
     }

@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using TaskFlow.Application.DTOs.Users;
 using TaskFlow.Application.Interfaces;
-using System.Security.Claims;
 
 namespace TaskFlow.Api.Controllers
 {
@@ -78,7 +78,7 @@ namespace TaskFlow.Api.Controllers
 
             return NoContent();
         }
-        
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

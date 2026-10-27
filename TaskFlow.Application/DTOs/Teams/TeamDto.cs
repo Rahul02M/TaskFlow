@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace TaskFlow.Application.DTOs.Teams
+﻿namespace TaskFlow.Application.DTOs.Teams
 {
     public class TeamDto
     {

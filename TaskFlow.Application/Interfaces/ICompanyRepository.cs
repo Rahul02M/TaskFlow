@@ -1,17 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using TaskFlow.Domain.Entities;
+﻿using TaskFlow.Domain.Entities;
 
 namespace TaskFlow.Application.Interfaces
 {
-    public  interface ICompanyRepository
+    public interface ICompanyRepository
     {
         Task<List<Company>> GetAllAsync();
 
         Task<Company?> GetByIdAsync(int id);
 
-        Task<Company?> GetByIdForUserAsync(int id,int userId);
+        Task<Company?> GetByIdForUserAsync(int id, int userId);
 
         Task<Company?> GetByNameAsync(string name);
 

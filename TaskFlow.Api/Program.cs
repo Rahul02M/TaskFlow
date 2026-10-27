@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using System.Security.Claims;
 using System.Text;
 using TaskFlow.Api.Middleware;
 using TaskFlow.Api.Services;
@@ -9,7 +10,11 @@ using TaskFlow.Application.Interfaces;
 using TaskFlow.Application.Services;
 using TaskFlow.Infrastructure.Data;
 using TaskFlow.Infrastructure.Repositories;
-using System.Security.Claims;
+
+
+
+
+
 
 
 
@@ -122,58 +127,58 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 //
 // JWT Authentication
 
-  builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        var jwtKey = builder.Configuration["Jwt:Key"];
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+  .AddJwtBearer(options =>
+  {
+      var jwtKey = builder.Configuration["Jwt:Key"];
 
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(jwtKey!)),
+      options.TokenValidationParameters = new TokenValidationParameters
+      {
+          ValidateIssuerSigningKey = true,
+          IssuerSigningKey = new SymmetricSecurityKey(
+              Encoding.UTF8.GetBytes(jwtKey!)),
 
-            ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+          ValidateIssuer = true,
+          ValidIssuer = builder.Configuration["Jwt:Issuer"],
 
-            ValidateAudience = true,
-            ValidAudience = builder.Configuration["Jwt:Audience"],
+          ValidateAudience = true,
+          ValidAudience = builder.Configuration["Jwt:Audience"],
 
-            ValidateLifetime = true,
+          ValidateLifetime = true,
 
-            ClockSkew = TimeSpan.Zero
-        };
+          ClockSkew = TimeSpan.Zero
+      };
 
-        options.Events = new JwtBearerEvents
-        {
-            OnTokenValidated = async context =>
-            {
-                var userRepository =
-                    context.HttpContext.RequestServices
-                        .GetRequiredService<IUserRepository>();
+      options.Events = new JwtBearerEvents
+      {
+          OnTokenValidated = async context =>
+          {
+              var userRepository =
+                  context.HttpContext.RequestServices
+                      .GetRequiredService<IUserRepository>();
 
-                var userIdValue =
-                    context.Principal?
-                        .FindFirstValue(ClaimTypes.NameIdentifier);
+              var userIdValue =
+                  context.Principal?
+                      .FindFirstValue(ClaimTypes.NameIdentifier);
 
-                if (!int.TryParse(userIdValue, out var userId))
-                {
-                    context.Fail("Invalid user identity.");
-                    return;
-                }
+              if (!int.TryParse(userIdValue, out var userId))
+              {
+                  context.Fail("Invalid user identity.");
+                  return;
+              }
 
-                var user =
-                    await userRepository.GetByIdAsync(userId);
+              var user =
+                  await userRepository.GetByIdAsync(userId);
 
-                if (user == null ||
-                    user.IsDeleted ||
-                    !user.IsActive)
-                {
-                    context.Fail("User is inactive or deleted.");
-                }
-            }
-        };
-    });
+              if (user == null ||
+                  user.IsDeleted ||
+                  !user.IsActive)
+              {
+                  context.Fail("User is inactive or deleted.");
+              }
+          }
+      };
+  });
 
 var app = builder.Build();
 

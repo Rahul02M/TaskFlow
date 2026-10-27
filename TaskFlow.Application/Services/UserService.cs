@@ -36,10 +36,6 @@ namespace TaskFlow.Application.Services
             }
             else if (currentUser.SystemRole == SystemRole.Admin)
             {
-                if (currentUser.CompanyId == null)
-                    throw new ForbiddenException(
-                        "Your account is not assigned to a company.");
-
                 users = await _userRepository.GetAllByCompanyIdAsync(
                     currentUser.CompanyId);
             }
@@ -76,10 +72,6 @@ namespace TaskFlow.Application.Services
             }
             else if (currentUser.SystemRole == SystemRole.Admin)
             {
-                if (currentUser.CompanyId == null)
-                    throw new ForbiddenException(
-                        "Your account is not assigned to a company.");
-
                 user = await _userRepository.GetByIdAndCompanyIdAsync(
                     id, currentUser.CompanyId);
 
@@ -107,7 +99,7 @@ namespace TaskFlow.Application.Services
                 IsActive = user.IsActive
             };
         }
-        public async Task<UserDto> CreateAsync(CreateUserRequest request,int currentUserId)
+        public async Task<UserDto> CreateAsync(CreateUserRequest request, int currentUserId)
         {
             var currentUser = await _userRepository.GetByIdAsync(currentUserId);
 
@@ -129,10 +121,6 @@ namespace TaskFlow.Application.Services
 
             if (currentUser.SystemRole == SystemRole.Admin)
             {
-                if (currentUser.CompanyId == null)
-                    throw new ForbiddenException(
-                        "Your account is not assigned to a company.");
-
                 if (request.CompanyId.HasValue &&
                     request.CompanyId.Value != currentUser.CompanyId)
                 {
@@ -210,7 +198,7 @@ namespace TaskFlow.Application.Services
                 IsActive = user.IsActive
             };
         }
-        public async Task<bool> UpdateAsync(int id,UpdateUserRequest request,int currentUserId)
+        public async Task<bool> UpdateAsync(int id, UpdateUserRequest request, int currentUserId)
         {
             var currentUser = await _userRepository.GetByIdAsync(currentUserId);
 
@@ -232,8 +220,7 @@ namespace TaskFlow.Application.Services
             // Admins can update only normal users in their own company.
             if (currentUser.SystemRole == SystemRole.Admin)
             {
-                if (currentUser.CompanyId == null ||
-                    user.CompanyId != currentUser.CompanyId)
+                if (user.CompanyId != currentUser.CompanyId)
                 {
                     throw new ForbiddenException(
                         "You cannot update a user from another company.");
@@ -340,8 +327,7 @@ namespace TaskFlow.Application.Services
 
             if (currentUser.SystemRole == SystemRole.Admin)
             {
-                if (currentUser.CompanyId == null ||
-                    user.CompanyId != currentUser.CompanyId)
+                if (user.CompanyId != currentUser.CompanyId)
                 {
                     throw new ForbiddenException(
                         "You cannot delete a user from another company.");

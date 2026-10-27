@@ -2,7 +2,7 @@
 
 namespace TaskFlow.Domain.Entities
 {
-    public  class Team
+    public class Team
     {
         public int Id { get; set; }
         public int CompanyId { get; set; }

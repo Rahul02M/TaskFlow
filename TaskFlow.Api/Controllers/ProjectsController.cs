@@ -1,10 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using TaskFlow.Application.DTOs.Projects;
 using TaskFlow.Application.Exceptions;
 using TaskFlow.Application.Interfaces;
-using TaskFlow.Domain.Entities;
 
 namespace TaskFlow.Api.Controllers
 {
@@ -38,13 +36,13 @@ namespace TaskFlow.Api.Controllers
 
             return Ok(project);
         }
-        
+
         [HttpPost]
         public async Task<IActionResult> Create(CreateProjectRequest request)
         {
             var project = await _projectService.CreateAsync(request);
 
-            return CreatedAtAction( nameof(GetById),new { id = project.Id },
+            return CreatedAtAction(nameof(GetById), new { id = project.Id },
             project);
         }
 

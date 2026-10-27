@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace TaskFlow.Application.DTOs.Projects
+﻿namespace TaskFlow.Application.DTOs.Projects
 {
     public class ProjectDto
     {

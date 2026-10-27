@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace TaskFlow.Application.Exceptions
+﻿namespace TaskFlow.Application.Exceptions
 {
-    public  class ConflictException :Exception
+    public class ConflictException : Exception
     {
-        public ConflictException(string message) 
+        public ConflictException(string message)
             : base(message)
         {
 

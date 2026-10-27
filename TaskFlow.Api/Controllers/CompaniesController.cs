@@ -1,11 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.FileProviders;
 using TaskFlow.Application.DTOs.Companies;
 using TaskFlow.Application.Interfaces;
-using TaskFlow.Domain.Entities;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace TaskFlow.Api.Controllers
 {

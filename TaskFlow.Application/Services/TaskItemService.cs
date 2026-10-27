@@ -10,7 +10,7 @@ namespace TaskFlow.Application.Services
     {
         private readonly ITaskItemRepository _taskItemRepository;
         private readonly IProjectRepository _projectRepository;
-      
+
         private readonly ITeamMemberRepository _teamMemberRepository;
         private readonly ICurrentUserService _currentUserService;
 

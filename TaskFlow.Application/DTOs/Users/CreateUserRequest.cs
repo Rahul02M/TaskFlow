@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Text;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace TaskFlow.Application.DTOs.Users
 {
-    public  class CreateUserRequest
+    public class CreateUserRequest
     {
         [Required]
         [StringLength(100, MinimumLength = 2)]

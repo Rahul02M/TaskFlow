@@ -51,7 +51,7 @@ namespace TaskFlow.Infrastructure.Repositories
         public async Task<TeamMember?> GetByIdForUserAsync(int id, int userId)
         {
             var user = await _context.Users
-               .Where(u =>u.Id == userId &&
+               .Where(u => u.Id == userId &&
                 !u.IsDeleted && u.IsActive &&
                 _context.Companies.Any(c =>
                     c.Id == u.CompanyId &&
@@ -200,7 +200,7 @@ namespace TaskFlow.Infrastructure.Repositories
                         c.Id == x.CompanyId &&
                         !c.IsDeleted));
         }
-        public async Task<TeamMember?> GetByUserIdAndTeamIdAsync(int userId,int teamId)
+        public async Task<TeamMember?> GetByUserIdAndTeamIdAsync(int userId, int teamId)
         {
             return await _context.TeamMembers
                 .FirstOrDefaultAsync(x =>

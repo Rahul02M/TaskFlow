@@ -48,21 +48,15 @@ namespace TaskFlow.Application.Services
             }
             else
             {
-                if (currentUser.CompanyId == null)
-                {
-                    throw new ForbiddenException(
-                        "You are not assigned to a company.");
-                }
-
-                var company =
-                    await _companyRepository.GetByIdForUserAsync(
-                        currentUser.CompanyId,
-                        _currentUserService.UserId);
+                var company = await _companyRepository.GetByIdForUserAsync(
+                    currentUser.CompanyId,
+                    _currentUserService.UserId);
 
                 companies = company == null
                     ? new List<Company>()
                     : new List<Company> { company };
             }
+
 
             return companies.Select(company => new CompanyDto
             {
@@ -159,8 +153,8 @@ namespace TaskFlow.Application.Services
             };
         }
 
-     
-    public async Task UpdateAsync(int id, UpdateCompanyRequest request)
+
+        public async Task UpdateAsync(int id, UpdateCompanyRequest request)
         {
             var currentUser = await _userRepository.GetByIdAsync(
                 _currentUserService.UserId);

@@ -43,20 +43,20 @@ namespace TaskFlow.Infrastructure.Repositories
         }
         public async Task<List<Project>> GetAllByUserIdAsync(int userId)
         {
-                            var user = await _context.Users
-                    .Where(u =>
-                        u.Id == userId &&
-                        !u.IsDeleted &&
-                        u.IsActive &&
-                        _context.Companies.Any(c =>
-                            c.Id == u.CompanyId &&
-                            !c.IsDeleted))
-                    .Select(u => new
-                    {
-                        u.CompanyId,
-                        u.SystemRole
-                    })
-                    .FirstOrDefaultAsync();
+            var user = await _context.Users
+    .Where(u =>
+        u.Id == userId &&
+        !u.IsDeleted &&
+        u.IsActive &&
+        _context.Companies.Any(c =>
+            c.Id == u.CompanyId &&
+            !c.IsDeleted))
+    .Select(u => new
+    {
+        u.CompanyId,
+        u.SystemRole
+    })
+    .FirstOrDefaultAsync();
             if (user == null)
                 return new List<Project>();
 

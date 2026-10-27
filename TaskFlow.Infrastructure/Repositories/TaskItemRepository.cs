@@ -47,7 +47,7 @@ namespace TaskFlow.Infrastructure.Repositories
                         c.Id == x.Project.Team.CompanyId &&
                         !c.IsDeleted));
         }
-        public async Task<List<TaskItem>> GetAllForUserAsync(int userId,SystemRole systemRole, int? companyId)
+        public async Task<List<TaskItem>> GetAllForUserAsync(int userId, SystemRole systemRole, int? companyId)
         {
             var query = _context.TaskItems
                 .Include(x => x.Project)
@@ -89,7 +89,7 @@ namespace TaskFlow.Infrastructure.Repositories
 
             return await query.ToListAsync();
         }
-        public async Task<TaskItem?> GetByIdForUserAsync(int id,int userId,SystemRole systemRole,int? companyId)
+        public async Task<TaskItem?> GetByIdForUserAsync(int id, int userId, SystemRole systemRole, int? companyId)
         {
             var query = _context.TaskItems
                 .Include(x => x.Project)

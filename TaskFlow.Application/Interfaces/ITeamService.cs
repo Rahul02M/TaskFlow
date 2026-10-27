@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using TaskFlow.Application.DTOs.Teams;
-using TaskFlow.Domain.Entities;
+﻿using TaskFlow.Application.DTOs.Teams;
 
 namespace TaskFlow.Application.Interfaces
 {

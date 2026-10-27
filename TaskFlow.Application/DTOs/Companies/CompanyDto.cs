@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace TaskFlow.Application.DTOs.Companies
+﻿namespace TaskFlow.Application.DTOs.Companies
 {
-    public  class CompanyDto
+    public class CompanyDto
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;

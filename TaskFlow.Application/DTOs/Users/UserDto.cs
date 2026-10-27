@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace TaskFlow.Application.DTOs.Users
+﻿namespace TaskFlow.Application.DTOs.Users
 {
-    public  class UserDto
+    public class UserDto
     {
         public int Id { get; set; }
 

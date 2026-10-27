@@ -1,9 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using TaskFlow.Application.DTOs.Teams;
 using TaskFlow.Application.Interfaces;
-using TaskFlow.Domain.Entities;
 
 namespace TaskFlow.Api.Controllers
 {

@@ -1,5 +1,4 @@
 ﻿using TaskFlow.Application.DTOs.Companies;
-using TaskFlow.Domain.Entities;
 
 namespace TaskFlow.Application.Interfaces
 {
