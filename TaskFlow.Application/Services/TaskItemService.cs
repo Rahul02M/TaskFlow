@@ -142,7 +142,44 @@ namespace TaskFlow.Application.Services
                 throw new ForbiddenException(
                     "You do not have access to this task.");
             }
+            var user = await _teamMemberRepository
+    .GetUserAsync(_currentUserService.UserId);
 
+            if (user == null)
+            {
+                throw new ForbiddenException("User not found or inactive.");
+            }
+
+            bool isChangingProject = existingTask.ProjectId != request.ProjectId;
+
+            if (isChangingProject)
+            {
+                // Admin and SuperAdmin can reassign within their permitted access.
+                if (user.SystemRole != SystemRole.Admin &&
+                    user.SystemRole != SystemRole.SuperAdmin)
+                {
+                    var currentTeamId = await _projectRepository
+                        .GetTeamIdAsync(existingTask.ProjectId);
+
+                    if (!currentTeamId.HasValue)
+                    {
+                        throw new ForbiddenException(
+                            "You do not have access to the current project.");
+                    }
+
+                    var teamMember = await _teamMemberRepository
+                        .GetByUserIdAndTeamIdAsync(
+                            user.Id,
+                            currentTeamId.Value);
+
+                    if (teamMember == null ||
+                        teamMember.TeamRole != TeamRole.TeamLead)
+                    {
+                        throw new ForbiddenException(
+                            "Only a TeamLead, Admin, or SuperAdmin can move a task to another project.");
+                    }
+                }
+            }
             if (!await _projectRepository.ExistsAsync(request.ProjectId))
             {
                 throw new NotFoundException($"Project with ID {request.ProjectId} was not found.");
