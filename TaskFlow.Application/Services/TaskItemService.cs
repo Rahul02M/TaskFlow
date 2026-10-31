@@ -57,13 +57,15 @@ namespace TaskFlow.Application.Services
 
             return MapToDto(task);
         }
+
         public async Task<TaskItemDto> CreateAsync(CreateTaskItemRequest request)
         {
             var projectExists = await _projectRepository.ExistsAsync(request.ProjectId);
 
             if (!projectExists)
             {
-                throw new NotFoundException($"Project with ID {request.ProjectId} was not found.");
+                throw new NotFoundException(
+                    $"Project with ID {request.ProjectId} was not found.");
             }
 
             if (!await HasProjectAccessAsync(request.ProjectId))
@@ -71,6 +73,41 @@ namespace TaskFlow.Application.Services
                 throw new ForbiddenException(
                     "You do not have access to this project.");
             }
+
+            // Get the current user.
+            var user = await _teamMemberRepository
+                .GetUserAsync(_currentUserService.UserId);
+
+            if (user == null)
+            {
+                throw new ForbiddenException("User not found or inactive.");
+            }
+
+            // Admin and SuperAdmin can create tasks within their permitted access.
+            if (user.SystemRole != SystemRole.Admin &&
+                user.SystemRole != SystemRole.SuperAdmin)
+            {
+                var teamId = await _projectRepository
+                    .GetTeamIdAsync(request.ProjectId);
+
+                if (!teamId.HasValue)
+                {
+                    throw new ForbiddenException(
+                        "You do not have access to this project.");
+                }
+
+                var teamMember = await _teamMemberRepository
+                    .GetByUserIdAndTeamIdAsync(user.Id, teamId.Value);
+
+                if (teamMember == null ||
+                    teamMember.TeamRole != TeamRole.TeamLead)
+                {
+                    throw new ForbiddenException(
+                        "Only TeamLeads can create tasks in their team.");
+                }
+            }
+
+            // Validate assigned user.
             if (request.AssignedUserId.HasValue)
             {
                 var userExists =
@@ -95,6 +132,7 @@ namespace TaskFlow.Application.Services
                 }
             }
 
+            // Validate task status and priority.
             if (!Enum.IsDefined(typeof(TaskItemStatus), request.TaskStatus))
             {
                 throw new InvalidOperationException("Invalid task status.");
@@ -104,6 +142,8 @@ namespace TaskFlow.Application.Services
             {
                 throw new InvalidOperationException("Invalid task priority.");
             }
+
+            var utcNow = DateTime.UtcNow;
 
             var taskItem = new TaskItem
             {
@@ -115,8 +155,8 @@ namespace TaskFlow.Application.Services
                 TaskPriority = (TaskPriority)request.TaskPriority,
                 DueDate = request.DueDate,
                 CompletedAt = request.TaskStatus == (int)TaskItemStatus.Completed
-                ? DateTime.UtcNow : null,
-                CreatedAt = DateTime.UtcNow,
+                    ? utcNow : null,
+                CreatedAt = utcNow,
                 IsDeleted = false
             };
 
@@ -125,10 +165,14 @@ namespace TaskFlow.Application.Services
             var createdTask = await _taskItemRepository.GetByIdAsync(taskItem.Id);
 
             if (createdTask == null)
+            {
                 throw new InvalidOperationException(
                     "Task could not be retrieved after creation.");
+            }
+
             return MapToDto(createdTask);
         }
+
         public async Task<bool> UpdateAsync(int id, UpdateTaskItemRequest request)
         {
             var existingTask = await _taskItemRepository.GetByIdAsync(id);

@@ -188,7 +188,10 @@ namespace TaskFlow.Infrastructure.Repositories
                 .AnyAsync(x =>
                     x.Id == userId &&
                     !x.IsDeleted &&
-                    x.IsActive);
+                    x.IsActive &&
+                    _context.Companies.Any(c =>
+                        c.Id == x.CompanyId &&
+                        !c.IsDeleted));
         }
         public async Task<bool> TeamExistsAsync(int teamId)
         {
