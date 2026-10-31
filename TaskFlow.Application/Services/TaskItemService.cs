@@ -152,38 +152,52 @@ namespace TaskFlow.Application.Services
 
             bool isChangingProject = existingTask.ProjectId != request.ProjectId;
 
+            if (!await _projectRepository.ExistsAsync(request.ProjectId))
+            {
+                throw new NotFoundException($"Project with ID {request.ProjectId} was not found.");
+            }
             if (isChangingProject)
             {
                 // Admin and SuperAdmin can reassign within their permitted access.
                 if (user.SystemRole != SystemRole.Admin &&
                     user.SystemRole != SystemRole.SuperAdmin)
                 {
+                    // Get source and destination team IDs.
                     var currentTeamId = await _projectRepository
                         .GetTeamIdAsync(existingTask.ProjectId);
 
-                    if (!currentTeamId.HasValue)
+                    var destinationTeamId = await _projectRepository
+                        .GetTeamIdAsync(request.ProjectId);
+
+                    if (!currentTeamId.HasValue || !destinationTeamId.HasValue)
                     {
                         throw new ForbiddenException(
-                            "You do not have access to the current project.");
+                            "You do not have access to the source or destination project.");
                     }
 
-                    var teamMember = await _teamMemberRepository
+                    // Check TeamLead role in the source team.
+                    var sourceTeamMember = await _teamMemberRepository
                         .GetByUserIdAndTeamIdAsync(
                             user.Id,
                             currentTeamId.Value);
 
-                    if (teamMember == null ||
-                        teamMember.TeamRole != TeamRole.TeamLead)
+                    // Check TeamLead role in the destination team.
+                    var destinationTeamMember = await _teamMemberRepository
+                        .GetByUserIdAndTeamIdAsync(
+                            user.Id,
+                            destinationTeamId.Value);
+
+                    if (sourceTeamMember == null ||
+                        sourceTeamMember.TeamRole != TeamRole.TeamLead ||
+                        destinationTeamMember == null ||
+                        destinationTeamMember.TeamRole != TeamRole.TeamLead)
                     {
                         throw new ForbiddenException(
-                            "Only a TeamLead, Admin, or SuperAdmin can move a task to another project.");
+                            "You must be a TeamLead in both the source and destination teams to move a task.");
                     }
                 }
             }
-            if (!await _projectRepository.ExistsAsync(request.ProjectId))
-            {
-                throw new NotFoundException($"Project with ID {request.ProjectId} was not found.");
-            }
+           
             if (!await HasProjectAccessAsync(request.ProjectId))
             {
                 throw new ForbiddenException(
@@ -294,8 +308,8 @@ namespace TaskFlow.Application.Services
                 teamId.Value);
         }
         private async Task<bool> IsUserInProjectTeamAsync(
-      int userId,
-      int projectId)
+           int userId,
+           int projectId)
         {
             var teamId = await _projectRepository.GetTeamIdAsync(projectId);
 
